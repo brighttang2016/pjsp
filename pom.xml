@@ -1,0 +1,129 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.pujjr</groupId>
+  <artifactId>pjsp</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+
+  <name>pjsp</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  	<log4j.version>1.2.17</log4j.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+ 
+    <!-- Spark dependency -->
+     <dependency> 
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.10</artifactId>
+      <version>2.0.0</version>
+      <scope>provided</scope>
+    </dependency> 
+    
+    <!-- https://mvnrepository.com/artifact/org.scala-lang/scala-library -->
+	 <dependency>
+	    <groupId>org.scala-lang</groupId>
+	    <artifactId>scala-library</artifactId>
+	    <version>2.11.5</version>
+	    <scope>provided</scope>
+	</dependency> 
+	
+	<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-hive_2.10 -->
+	 <dependency>
+	    <groupId>org.apache.spark</groupId>
+	    <artifactId>spark-hive_2.10</artifactId>
+	    <version>2.0.0</version>
+	    <scope>provided</scope>
+	</dependency> 
+	<!-- mysql驱动包 -->
+	<dependency>
+		<groupId>mysql</groupId>
+		<artifactId>mysql-connector-java</artifactId>
+		<version>5.1.21</version>
+	</dependency>
+	<!-- netty相关 -->
+	<dependency>
+	    <groupId>io.netty</groupId>
+	    <artifactId>netty-all</artifactId>
+	    <version>4.1.6.Final</version>
+	</dependency>
+    	<!-- fast json -->
+	<dependency>
+		<groupId>com.alibaba</groupId>
+		<artifactId>fastjson</artifactId>
+		<version>1.1.41</version>
+	</dependency> 
+	<dependency>
+		<groupId>log4j</groupId>
+		<artifactId>log4j</artifactId>
+		<version>${log4j.version}</version>
+	</dependency>
+	    
+  </dependencies>
+  
+  <build>
+  	<finalName>pjsp</finalName>
+    <plugins>
+    	<plugin>  
+		    <artifactId>maven-compiler-plugin</artifactId>  
+		    <version>2.5</version>  
+		    <configuration>  
+		        <source>1.7</source>  
+		        <target>1.7</target>  
+		    </configuration>  
+		</plugin> 
+		
+		<!-- 用来创建超级JAR包的Maven shade插件 -->
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-shade-plugin</artifactId>
+			<version>2.3</version>
+			<configuration>
+	          <transformers>
+			     <transformer implementation = "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+				 	<!-- <mainClass>com.pujjr.antifraud.http.AntiFraudHttpServer</mainClass> -->
+				 	<mainClass>com.pujjr.antifraud.com.SocketServer</mainClass>
+			     </transformer>
+		  	  </transformers>
+	        </configuration>
+			<executions>
+				<!-- <execution>
+					<phase>package</phase>
+					<goals>
+						<goal>shade</goal>
+					</goals>
+				</execution>
+				 -->
+				<execution>
+			        <phase>package</phase>
+			        <goals>
+			            <goal>shade</goal>
+			        </goals>
+			        <configuration>
+			            <filters>
+			                <filter>
+			                    <artifact>*:*</artifact>
+			                    <excludes>
+			                        <exclude>META-INF/*.SF</exclude>
+			                        <exclude>META-INF/*.DSA</exclude>
+			                        <exclude>META-INF/*.RSA</exclude>
+			                    </excludes>
+			                </filter>
+			            </filters>
+			        </configuration>
+			    </execution>
+			</executions>
+		</plugin>
+    </plugins>
+  </build>
+</project>
