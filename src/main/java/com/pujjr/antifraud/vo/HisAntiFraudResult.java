@@ -12,6 +12,16 @@ public class HisAntiFraudResult {
 	private String appId;
 	private String name;
 	private boolean isBlack;
+	private String oldAppId;
+
+	
+	public String getOldAppId() {
+		return oldAppId;
+	}
+
+	public void setOldAppId(String oldAppId) {
+		this.oldAppId = oldAppId;
+	}
 
 	public String getNewFieldName() {
 		return newFieldName;

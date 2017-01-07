@@ -228,23 +228,29 @@ public class RddServiceImpl implements IRddService,Serializable {
 	 */
 	@Override
 	public String selectBigDataTest(String appId) {
-		long timeBegin = System.currentTimeMillis();
 		logger.info("Rdd服务");
+		JavaSparkContext sc = (JavaSparkContext) TransactionMapData.getInstance().get("sc");
+		Map rddMap1 = sc.getPersistentRDDs();
+		logger.info("缓存rddMap1:"+rddMap1);
 		DataFrameReader reader = new RddFilterImpl().getReader();
         reader.option("dbtable", "t_big_apply");
         Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
         JavaRDD<Row> javaRdd = dataSet.javaRDD();
 //        javaRdd.persist(StorageLevel.MEMORY_ONLY());
-        
         Map<String,Object> paramMap = new HashMap<String,Object>();
         paramMap.put("userId", "8888");
         JavaRDD<Row> javaRdd2 = javaRdd.filter(new Contains(paramMap));
-
-        System.out.println("javaRdd2.count():"+javaRdd2.count());
+        javaRdd2.persist(StorageLevel.MEMORY_AND_DISK());
+//        logger.info("javaRdd2.first():"+javaRdd2.first());
+        Map rddMap2 = sc.getPersistentRDDs();
+//      logger.info("javaRdd2.count():"+javaRdd2.count());
+//      logger.info("javaRdd2.count():"+javaRdd2.count());
+//      logger.info("javaRdd2.count():"+javaRdd2.count());
+//      logger.info("javaRdd2.count():"+javaRdd2.count());
+//      logger.info("javaRdd2.count():"+javaRdd2.count());
+//      logger.info("javaRdd2.count():"+javaRdd2.count());
+        logger.info("缓存rddMap2:"+rddMap2);
         logger.info("RDD处理结束");
-       
-        long timeEnd = System.currentTimeMillis();
-        logger.info("执行完成，耗时："+(timeEnd-timeBegin)/1000);
 		return "海量数据表格读取测试";
 	}
 
@@ -276,7 +282,6 @@ public class RddServiceImpl implements IRddService,Serializable {
 				return row.getAs("userId").equals("8888");
 			}
 		});*/
-        System.out.println("javaRdd2.count():"+javaRdd2.count());
 //        logger.debug("RDD处理结束");
     	System.out.println("RDD处理结束");
     	

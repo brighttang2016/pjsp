@@ -29,6 +29,38 @@ import scala.annotation.meta.param;
  */
 public class RddFilterImpl implements IRddFilter {
 	private static final Logger logger = Logger.getLogger(RddFilterImpl.class);
+	
+	/**
+	 * 判断是否为黑名单
+	 * tom 2017年1月7日
+	 * @param newField
+	 * @param newFieldValue
+	 * @param result
+	 */
+	public void isBlack(String newField,String newFieldValue,HisAntiFraudResult result){
+		//黑名单数据集
+		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
+		//判断当前历史行数据是否为黑名单
+		Map<String,Object> tempParamMap = new HashMap<String,Object>();
+		if("MOBILE2".equals(newField) || "UNIT_TEL".equals(newField)){//反欺诈过程中，承租人电话号码2、单位电话均与表t_blacklist_ref_contract中的MOBILE字段相对应。
+			tempParamMap.put("MOBILE", newFieldValue);
+		}else{
+			tempParamMap.put(newField, newFieldValue);
+		}
+		Contains contains = new Contains(tempParamMap);
+		//1、
+		JavaRDD<Row> blackRdd = blackListRdd.filter(contains);//t_blacklist表过滤后数据集
+		JavaRDD<Row> blackRefRdd = blackListContractRdd.filter(contains);//t_blacklist_ref_contract表过滤后数据集
+		if(blackRdd.count() > 0){
+			result.setIsBlack(true);
+		}else if(blackRefRdd.count() > 0){
+			result.setIsBlack(true);
+		}else{
+			result.setIsBlack(false);
+		}
+	}
+	
 	public DataFrameReader getReader(){
 		JavaSparkContext sc = (JavaSparkContext) TransactionMapData.getInstance().get("sc");
         SQLContext sqlContext = new SQLContext(sc);
@@ -64,16 +96,18 @@ public class RddFilterImpl implements IRddFilter {
 		logger.info("rowCnt:"+rowCnt);
 		if(rowCnt > 0){
 			List<Row> rowList = filtRdd.take(rowCnt);
+			//遍历历史行数据
 			for (Row row : rowList) {
+				logger.info("filt row:"+row);
 				HisAntiFraudResult result = new HisAntiFraudResult();
 				result.setAppId(appId);
 				result.setName(tenantName);
 				result.setNewFieldName(newFieldName);
 				result.setNewFieldValue(newFieldValue);
+				result.setOldAppId(row.getAs("APP_ID").toString());
 				result.setOldFieldName(oldFieldName);
-				logger.info("tttttrow:"+row);
 				result.setOldFieldValue(row.getAs(newField).toString());
-				result.setIsBlack(false);
+				this.isBlack(newField, newFieldValue, result);
 				resultList.add(result);
 			}
 		}
@@ -99,9 +133,10 @@ public class RddFilterImpl implements IRddFilter {
 				result.setName(tenantName);
 				result.setNewFieldName(newFieldName);
 				result.setNewFieldValue(newFieldValue);
+				result.setOldAppId(row.getAs("APP_ID").toString());
 				result.setOldFieldName(oldFieldName);
 				result.setOldFieldValue(row.getAs(newField).toString());
-				result.setIsBlack(false);
+				this.isBlack(newField, newFieldValue, result);
 				resultList.add(result);
 			}
 		}
@@ -114,6 +149,8 @@ public class RddFilterImpl implements IRddFilter {
 		IRddFilter rddFilter = new RddFilterImpl();
 		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
+		if(row.getAs("INVOICE_CODE") == null || row.getAs("INVOICE_NO") == null)
+			return resultList;
 		String invoceCode = row.getAs("INVOICE_CODE").toString();
 		String invoceNo = row.getAs("INVOICE_NO").toString();
 		paramMap.put("APP_ID", row.getAs("APP_ID"));
@@ -130,6 +167,7 @@ public class RddFilterImpl implements IRddFilter {
 				result.setName(tenantName);
 				result.setNewFieldName("发票代码+发票号码");
 				result.setNewFieldValue(invoceCode+" "+invoceNo);
+				result.setOldAppId(row.getAs("APP_ID").toString());
 				result.setOldFieldName("发票代码+发票号码");
 				result.setOldFieldValue(rowTemp.getAs("INVOICE_CODE")+" "+rowTemp.getAs("INVOICE_NO"));
 				result.setIsBlack(false);

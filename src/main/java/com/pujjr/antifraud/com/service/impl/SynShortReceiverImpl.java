@@ -39,8 +39,9 @@ public class SynShortReceiverImpl implements ISynShortReceiver{
 		}
 		IRddService rddServiceImp = new RddServiceImpl();
 		String appId = recJson.getString("appId");
+		long timeBegin = System.currentTimeMillis();
 		switch(tranCode){
-		case "00001"://申请单提交后反欺诈查询关系（初审操作）
+		case "00001"://海量数据表测试
 			sendStr = rddServiceImp.selectBigDataTest(appId);
 			break;
 		case "10001"://申请单提交后反欺诈查询关系（初审操作）
@@ -59,6 +60,8 @@ public class SynShortReceiverImpl implements ISynShortReceiver{
 			sendStr = rddServiceImp.loanReviewTrial(appId);
 			break;
 		}
+		long timeEnd = System.currentTimeMillis();
+	    logger.info("执行完成，耗时："+(timeEnd-timeBegin)/1000);
 		ISynShortSender sender = new SynShortSenderImpl();
 		sender.doSend(sendStr, ctx);
 	}

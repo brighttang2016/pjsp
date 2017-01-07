@@ -23,7 +23,10 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
 		JavaRDD<Row> colesseeRdd = rddFilter.getTableRdd("t_apply_colessee");
 		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_apply_spouse");
+		
 //		JavaRDD<Row> linkmanRdd = rddFilter.getTableRdd("t_apply_linkman");
+		if(row.getAs("ID_NO") == null)
+			return resultList;
 		String idNo = row.getAs("ID_NO").toString();
 //		String tenantName = row.getAs("NAME").toString();
 		switch(personType.getTypeCode()){
@@ -43,7 +46,7 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
 			break;
 		}
-//      resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, idNo, "ID_NO", "黑名单", appId, tenantName));
+//		resultList.addAll(rddFilter.filtWithoutAppid(blackListContractRdd, newFieldName, idNo, "ID_NO", "黑名单中身份证号码", appId, tenantName));
 		return resultList;
 	}
 	
@@ -55,6 +58,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		JavaRDD<Row> colesseeRdd = rddFilter.getTableRdd("t_apply_colessee");
 		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_apply_spouse");
 		JavaRDD<Row> linkmanRdd = rddFilter.getTableRdd("t_apply_linkman");
+		if(row.getAs(field) == null)
+			return resultList;
 		String newFieldValue = row.getAs(field).toString();
 //		String tenantName = row.getAs("NAME").toString();
 		switch(personType.getTypeCode()){
@@ -110,6 +115,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
 		JavaRDD<Row> colesseeRdd = rddFilter.getTableRdd("t_apply_colessee");
 		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_apply_spouse");
+		if(row.getAs(field) == null)
+			return resultList;
 		String newFieldValue = row.getAs(field).toString();
 //		String tenantName = row.getAs("NAME").toString();
 		switch(personType.getTypeCode()){
@@ -138,6 +145,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
 		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
+		if(row.getAs("CAR_VIN") == null)
+			return resultList;
 		String newFieldValue = row.getAs("CAR_VIN").toString();
 		resultList.addAll(rddFilter.filt(financeRdd, "车架号", newFieldValue, "CAR_VIN", "车架号", appId, tenantName));
 		return resultList;
@@ -148,6 +157,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
 		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
+		if(row.getAs("CAR_ENGINE_NO") == null)
+			return resultList;
 		String newFieldValue = row.getAs("CAR_ENGINE_NO").toString();
 		resultList.addAll(rddFilter.filt(financeRdd, "发动机号", newFieldValue, "CAR_ENGINE_NO", "发动机号", appId, tenantName));
 		return resultList;
@@ -158,6 +169,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
 		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		if(row.getAs("PLATE_NO") == null)
+			return resultList;
 		String newFieldValue = row.getAs("PLATE_NO").toString();
 		resultList.addAll(rddFilter.filt(signFinanceDetailRdd, "车牌号", newFieldValue, "PLATE_NO", "车牌号", appId, tenantName));
 		return resultList;
@@ -168,6 +181,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
 		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		if(row.getAs("GPS_WIRED_NO") == null)
+			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRED_NO").toString();
 		resultList.addAll(rddFilter.filt(spouseRdd, "有线GPS编码", newFieldValue, "GPS_WIRED_NO", "有线GPS编码", appId, tenantName));
 		return resultList;
@@ -178,6 +193,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
 		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		if(row.getAs("GPS_WIRELESS_NO") == null)
+			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRELESS_NO").toString();
 		resultList.addAll(rddFilter.filt(spouseRdd, "无线GPS编码", newFieldValue, "GPS_WIRELESS_NO", "无线GPS编码", appId, tenantName));
 		return resultList;
