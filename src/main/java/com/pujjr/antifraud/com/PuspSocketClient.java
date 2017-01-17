@@ -94,10 +94,11 @@ public class PuspSocketClient {
 			if(socket.isConnected()){
 				InputStream is = socket.getInputStream();
 				byte[] buf = new byte[bufSize];
+				byte[] lengthBuf = new byte[5];//报文长度缓冲区
 				StringBuffer sb = new StringBuffer();
 				//读取报文长度
-				is.read(buf, 0, 5);
-				String rcvLengthStr = new String(buf, "gbk").trim();
+				is.read(lengthBuf, 0, 5);
+				String rcvLengthStr = new String(lengthBuf, "gbk").trim();
 				logger.info("报文接收长度receiveLength："+rcvLengthStr);
 				long rcvLength = Integer.parseInt(rcvLengthStr);    //接收报文长度
 				int readLength = 0;									//单次循环读取字节
@@ -145,11 +146,12 @@ public class PuspSocketClient {
 	 */
 	public static void main(String[] args) {
 		PuspSocketClient client = new PuspSocketClient();
-		String host = "127.0.0.1";
+//		String host = "127.0.0.1";
+		String host = "192.168.137.16";
 		int port = 5000;
 		Socket socket = client.doConnect(host, port);
 		//{"tranCode":"10001","appId":"D4011701050502N3"}
-		String sendStr = "{\"tranCode\":\"10001\",\"appId\":\"D4011701050502N3\"}";
+		String sendStr = "{\"tranCode\":\"10001\",\"appId\":\"D4021611030272N1555\"}";
 		String strReceive = client.doSend(socket, sendStr);
 		logger.info("strReceive:"+strReceive);
 	}

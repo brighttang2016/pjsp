@@ -77,7 +77,8 @@ public class RddServiceImpl implements IRddService,Serializable {
         	resultList.addAll(fieldAntiFraud.unitNameAntiFraud(tenantRow, appId, "承租人单位名称", "UNIT_NAME",EPersonType.TENANT,tenantName));
         	resultList.addAll(fieldAntiFraud.mobileAntiFraud(tenantRow, appId, "承租人单位电话", "UNIT_TEL",EPersonType.TENANT,tenantName));
         }else{
-        	return "错误信息：appId:"+appId+"无对应承租人";
+//        	return "错误信息：appId:"+appId+"无对应承租人";
+        	return JSONObject.toJSONString(resultList);
         }
         //配偶
         JavaRDD<Row> spouseRdd2 = spouseRdd.filter(contains);
@@ -163,7 +164,8 @@ public class RddServiceImpl implements IRddService,Serializable {
 			Row tenantRow = tenantRdd2.take(tenantCnt).get(0);
 			tenantName = tenantRow.getAs("NAME");
 		}else{
-			return "无对应承租人";
+//			return "无对应承租人";
+			return JSONObject.toJSONString(resultList);
 		}
 		
 		//车架号

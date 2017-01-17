@@ -41,9 +41,8 @@ public class TransactionMapData implements Cloneable{
 			}else{
 				conf.setMaster(Utils.getProperty("sparkMaster").toString());
 			}
-			logger.debug(Utils.getProperty("sparkMaster").toString());
 			conf.setAppName(Utils.getProperty("appName").toString());
-			conf.set("spark.sql.warehouse.dir", Utils.getProperty("warehouseDir").toString());
+//			conf.set("spark.sql.warehouse.dir", Utils.getProperty("warehouseDir").toString());
 //			conf.set("spark.executor.memory", "1024m");
 //			conf.set("spark.storage.memoryFraction", "0.8");
 	        JavaSparkContext sc = new JavaSparkContext(conf);
