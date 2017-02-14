@@ -1,28 +1,11 @@
-package com.pujjr.antifraud.com;
+package com.pujjr.antifraud.com.impl;
 
 import java.io.UnsupportedEncodingException;
-
 import org.apache.log4j.Logger;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.DataFrameReader;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SQLContext;
-import org.apache.spark.storage.StorageLevel;
-
-import com.pujjr.antifraud.com.service.ISynShortReceiver;
-import com.pujjr.antifraud.com.service.impl.SynShortReceiverImpl;
-import com.pujjr.antifraud.util.TransactionMapData;
-
+import com.pujjr.antifraud.com.ISynShortReceiver;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.util.ReferenceCountUtil;
 import scala.Serializable;
 
 /**
@@ -51,7 +34,6 @@ public class SocketServerHandler extends ChannelInboundHandlerAdapter implements
     	buf.readBytes(req);
     	try {
     		recStr = new String(req,"gbk");
-			System.out.println("NettyServerHandler 接受客户端报文:"+recStr);
 			logger.info("NettyServerHandler 接受客户端报文:"+recStr);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();

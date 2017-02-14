@@ -1,4 +1,4 @@
-package com.pujjr.antifraud.com;
+package com.pujjr.antifraud.com.impl;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -8,6 +8,7 @@ import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.SQLContext;
 
 import com.pujjr.antifraud.util.TransactionMapData;
+import com.pujjr.antifraud.util.Utils;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -31,29 +32,24 @@ public class SocketServer extends Thread{
 	}
 
 	public void run() {
-		EventLoopGroup bossGroup = new NioEventLoopGroup(); // (1)
+		EventLoopGroup bossGroup = new NioEventLoopGroup(); 
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 		try {
-			ServerBootstrap b = new ServerBootstrap(); // (2)
-			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class) // (3)
-					.childHandler(new ChannelInitializer<SocketChannel>() { // (4)
+			ServerBootstrap b = new ServerBootstrap(); 
+			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class) 
+					.childHandler(new ChannelInitializer<SocketChannel>() { 
 						@Override
 						public void initChannel(SocketChannel ch) throws Exception {
 							ch.pipeline().addLast(new SocketServerHandler());
 						}
-					}).option(ChannelOption.SO_BACKLOG, 128) // (5)
-					.childOption(ChannelOption.SO_KEEPALIVE, true); // (6)
-			// Bind and start to accept incoming connections.
-			ChannelFuture f = b.bind(port).sync(); // (7)
-			logger.info("服务端启动成功，监听端口："+port);
-			// Wait until the server socket is closed.
-			// In this example, this does not happen, but you can do that to
-			// gracefully
-			// shut down your server.
-			f.channel().closeFuture().sync();
+					}).option(ChannelOption.SO_BACKLOG, 128)
+					.childOption(ChannelOption.SO_KEEPALIVE, true); 
 			
+			ChannelFuture f = b.bind(port).sync();
+			logger.info("服务端启动成功，监听端口："+port);
+			
+			f.channel().closeFuture().sync();
 		}catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			workerGroup.shutdownGracefully();
@@ -62,26 +58,12 @@ public class SocketServer extends Thread{
 	}
 
 	public static void main(String[] args) throws Exception {
-		int port;
+		int port = 5000;
 		if (args.length > 0) {
 			port = Integer.parseInt(args[0]);
 		} else {
-			port = 5000;
+			port = Integer.parseInt(Utils.getProperty("socketServerPort")+"");
 		}
-		
-		/*//发布到spark运行
-    	SparkConf conf = new SparkConf();
-		conf.setMaster("local");
-//		conf.setMaster("spark://192.168.137.16:7077");
-		conf.setAppName("SparkSQLJDBC2MySQL");
-		conf.set("spark.sql.warehouse.dir", "/path/to/my/");
-        JavaSparkContext sc = new JavaSparkContext(conf);
-        SQLContext sqlContext = new SQLContext(sc);
-        DataFrameReader reader = sqlContext.read().format("jdbc");
-		
-        TransactionMapData tmd = TransactionMapData.getInstance();
-		tmd.put("reader", reader);*/
-		
 		new SocketServer(port).run();
 	}
 }

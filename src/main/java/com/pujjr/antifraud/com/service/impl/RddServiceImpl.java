@@ -22,7 +22,6 @@ import org.codehaus.janino.IClass.IField;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.pujjr.SparkApp.JdbcTest;
 import com.pujjr.antifraud.com.service.IFieldAntiFraud;
 import com.pujjr.antifraud.com.service.IRddFilter;
 import com.pujjr.antifraud.com.service.IRddService;
@@ -381,6 +380,31 @@ public class RddServiceImpl implements IRddService,Serializable {
 //    	new Thread(new SendThread(this,ctx)).start();
     	System.out.println("执行完成");
 		return null;
+	}
+	@Override
+	public String doService(String tranCode,String appId) {
+		String sendStr = "";
+		switch(tranCode){
+		case "00001"://海量数据表测试
+			sendStr = this.selectBigDataTest(appId);
+			break;
+		case "10001"://申请单提交后反欺诈查询关系（初审操作）
+			sendStr = this.firstTrial(appId);
+			break;
+		case "10002"://征信接口返回数据后第3方数据反欺诈查询关系（审核操作）
+			sendStr = this.creditTrial(appId);
+			break;
+		case "10003"://审核完成后反欺诈查询关系（审批操作）
+			sendStr = this.checkTrial(appId);
+			break;
+		case "10004"://签约提交后反欺诈（放款复核操作）
+			sendStr = this.signTrial(appId);
+			break;
+		case "10005"://放款复核后反欺诈查询关系（放款复核初级审批）
+			sendStr = this.loanReviewTrial(appId);
+			break;
+		}
+		return sendStr;
 	}
 
 }

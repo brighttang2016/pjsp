@@ -1,4 +1,4 @@
-package com.pujjr.antifraud.com.service;
+package com.pujjr.antifraud.com;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
