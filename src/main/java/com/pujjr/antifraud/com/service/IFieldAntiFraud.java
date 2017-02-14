@@ -19,6 +19,7 @@ public interface IFieldAntiFraud {
 	 * @param row
 	 * @param appId
 	 * @param newFieldName 新申请字段名称
+	 * @param personType 人员类别：001：承租人；002：共租人；003：配偶；004：联系人
 	 * @param tenantName 承租人姓名
 	 * @return
 	 */

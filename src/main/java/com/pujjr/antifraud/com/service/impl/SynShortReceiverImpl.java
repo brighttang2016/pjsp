@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
 
 import com.alibaba.fastjson.JSONObject;
 import com.pujjr.antifraud.com.service.IRddService;
@@ -40,6 +41,7 @@ public class SynShortReceiverImpl implements ISynShortReceiver{
 		IRddService rddServiceImp = new RddServiceImpl();
 		String appId = recJson.getString("appId");
 		long timeBegin = System.currentTimeMillis();
+		
 		switch(tranCode){
 		case "00001"://海量数据表测试
 			sendStr = rddServiceImp.selectBigDataTest(appId);
@@ -60,6 +62,10 @@ public class SynShortReceiverImpl implements ISynShortReceiver{
 			sendStr = rddServiceImp.loanReviewTrial(appId);
 			break;
 		}
+		
+		
+//		sendStr = "[]";
+
 		long timeEnd = System.currentTimeMillis();
 	    logger.info("执行完成，耗时："+(timeEnd-timeBegin)/1000);
 		ISynShortSender sender = new SynShortSenderImpl();

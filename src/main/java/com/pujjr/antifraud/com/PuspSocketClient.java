@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
+import org.apache.hadoop.hive.ql.parse.HiveParser_IdentifiersParser.timestampLiteral_return;
 import org.apache.http.util.ByteArrayBuffer;
 import org.apache.log4j.Logger;
 
@@ -89,11 +91,12 @@ public class PuspSocketClient {
 	 * @return 服务端返回字符串
 	 */
 	public String doReceive(Socket socket){
-		String strReceive = "";
+		String allReceiveStr = "";
 		try {
 			if(socket.isConnected()){
 				InputStream is = socket.getInputStream();
 				byte[] buf = new byte[bufSize];
+				Arrays.fill(buf, (byte)32);
 				byte[] lengthBuf = new byte[5];//报文长度缓冲区
 				StringBuffer sb = new StringBuffer();
 				//读取报文长度
@@ -104,12 +107,19 @@ public class PuspSocketClient {
 				int readLength = 0;									//单次循环读取字节
 				long sumReadLength = 0;								//总读取字节
 				int remainLength = (int) rcvLength;					//剩余接收字节
+				//总接收数组
+				byte[] allReceiveByte  = new byte[(int) rcvLength];
 				//读入缓冲区
 				if(remainLength > bufSize){
 					readLength = is.read(buf);
 				}else{
 					readLength = is.read(buf, 0, remainLength);
 				}
+				//缓冲区数组字节入总接收数组
+				for (int i = 0; i < readLength; i++) {
+					allReceiveByte[i] = buf[i];
+				}
+				
 				while(readLength != -1){
 					sumReadLength += readLength;
 					String tempStr = new String(buf,"gbk");
@@ -120,16 +130,21 @@ public class PuspSocketClient {
 						break;
 					}else if(sumReadLength < rcvLength){
 						buf = new byte[bufSize];
+						Arrays.fill(buf, (byte)32);
 						remainLength = (int) (rcvLength - sumReadLength);
 						if(remainLength > bufSize){
 							readLength = is.read(buf);
 						}else{
 							readLength = is.read(buf, 0, remainLength);
 						}
+						//缓冲区数组字节入总接收数组
+						for (int i = (int) sumReadLength; i < sumReadLength+readLength; i++) {
+							allReceiveByte[i] = buf[(int) (i - sumReadLength)];
+						}
 					}
 				}
-				strReceive = sb.toString();
-				logger.info("报文接收完成，receive from server:"+sb.toString());
+				allReceiveStr = new String(allReceiveByte,"gbk");
+				logger.info("报文接收完成，receive from server:"+allReceiveStr);
 				if(sumReadLength != rcvLength){
 					logger.error("报文长度错误，报文长度限制rcvLength："+rcvLength+",实际读取长度sumReadLength："+sumReadLength);
 				}
@@ -137,7 +152,7 @@ public class PuspSocketClient {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return strReceive;
+		return allReceiveStr;
 	}
 	
 	/**
@@ -146,13 +161,20 @@ public class PuspSocketClient {
 	 */
 	public static void main(String[] args) {
 		PuspSocketClient client = new PuspSocketClient();
-//		String host = "127.0.0.1";
-		String host = "192.168.137.16";
+		String host = "127.0.0.1";
+//		String host = "192.168.137.16";
 		int port = 5000;
 		Socket socket = client.doConnect(host, port);
 		//{"tranCode":"10001","appId":"D4011701050502N3"}
-		String sendStr = "{\"tranCode\":\"10001\",\"appId\":\"D4021611030272N1555\"}";
-		String strReceive = client.doSend(socket, sendStr);
-		logger.info("strReceive:"+strReceive);
+		long timeStart = System.currentTimeMillis();
+		for (int i = 0; i < 1; i++) {
+			String sendStr = "{\"tranCode\":\"10001\",\"appId\":\"D4021701190041N1\"}";
+			String strReceive = client.doSend(socket, sendStr);
+			logger.info("strReceive:"+strReceive);
+//			System.out.println(JSONArray.parseArray(strReceive).size());
+		}
+		long timeEnd = System.currentTimeMillis();
+		long timeInterval = (timeEnd - timeStart)/1000;
+		System.out.println("耗时："+timeInterval+"秒");
 	}
 }

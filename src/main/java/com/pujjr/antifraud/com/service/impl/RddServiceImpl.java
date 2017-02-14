@@ -42,7 +42,7 @@ import scala.Serializable;
 public class RddServiceImpl implements IRddService,Serializable {
 	private static String name = null;
 	private static final Logger logger = Logger.getLogger(RddServiceImpl.class);
-	
+	TransactionMapData tmd = TransactionMapData.getInstance();
 	@Override
 	public String selectHis(String appId) {
 		return null;
@@ -58,30 +58,66 @@ public class RddServiceImpl implements IRddService,Serializable {
 		JavaRDD<Row> linkmanRdd = rddFilter.getTableRdd("t_apply_linkman");
 		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
 		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		
+		//黑名单
+		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		
+		
+		tmd.put("tenantRdd", tenantRdd);
+		tmd.put("colesseeRdd", colesseeRdd);
+		tmd.put("spouseRdd", spouseRdd);
+		tmd.put("linkmanRdd", linkmanRdd);
+		tmd.put("financeRdd", financeRdd);
+		tmd.put("signFinanceDetailRdd", signFinanceDetailRdd);
+		
+		tmd.put("blackListContractRdd", blackListContractRdd);
+		tmd.put("blackListRdd", blackListRdd);
+		
+		/*tenantRdd.cache();
+		colesseeRdd.cache();
+		spouseRdd.cache();
+		linkmanRdd.cache();
+		financeRdd.cache();
+		signFinanceDetailRdd.cache();*/
+		
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		IFieldAntiFraud fieldAntiFraud = new FieldAntiFraudImpl();
 		//承租人
         paramMap.put("APP_ID", appId);
         Contains contains = new Contains(paramMap);
         JavaRDD<Row> tenantRdd2 = tenantRdd.filter(contains);
+        tenantRdd2.persist(StorageLevel.MEMORY_AND_DISK());
 //        logger.info("tenantRdd2.count():"+tenantRdd2.count());
-        int tenantCnt = (int) tenantRdd2.count();
+        int tenantCnt = (int) tenantRdd2.count();//存在数据库链接操作
         Row tenantRow = null;
         String tenantName = "";
+        
         if(tenantCnt == 1){
         	tenantRow = tenantRdd2.take(tenantCnt).get(0);//一个订单对应一个唯一承租人
+        	logger.info("tenantRow:"+tenantRow);
         	tenantName = tenantRow.getAs("NAME");
+        	
         	resultList.addAll(fieldAntiFraud.idNoAntiFraud(tenantRow,appId,"承租人身份证号码",EPersonType.TENANT,tenantName));
+        	
+        	
         	resultList.addAll(fieldAntiFraud.mobileAntiFraud(tenantRow, appId, "承租人电话号码1","MOBILE",EPersonType.TENANT,tenantName));
+        	
         	resultList.addAll(fieldAntiFraud.mobileAntiFraud(tenantRow, appId, "承租人电话号码2","MOBILE2",EPersonType.TENANT,tenantName));
+        	
         	resultList.addAll(fieldAntiFraud.unitNameAntiFraud(tenantRow, appId, "承租人单位名称", "UNIT_NAME",EPersonType.TENANT,tenantName));
+        	
         	resultList.addAll(fieldAntiFraud.mobileAntiFraud(tenantRow, appId, "承租人单位电话", "UNIT_TEL",EPersonType.TENANT,tenantName));
+        	
         }else{
-//        	return "错误信息：appId:"+appId+"无对应承租人";
         	return JSONObject.toJSONString(resultList);
         }
+        
+        
+        
         //配偶
         JavaRDD<Row> spouseRdd2 = spouseRdd.filter(contains);
+//        spouseRdd2.persist(StorageLevel.MEMORY_AND_DISK());
         int spouseCnt = (int) spouseRdd2.count();
         logger.info("spouseCnt:"+spouseCnt);
         for (int i = 0; i < spouseCnt; i++) {
@@ -91,6 +127,8 @@ public class RddServiceImpl implements IRddService,Serializable {
 			resultList.addAll(fieldAntiFraud.unitNameAntiFraud(row, appId, "配偶单位名称", "UNIT_NAME", EPersonType.SPOUSE, tenantName));
 			resultList.addAll(fieldAntiFraud.mobileAntiFraud(row, appId, "配偶单位电话", "UNIT_TEL", EPersonType.SPOUSE, tenantName));
 		}
+        
+        
         //共租人
         JavaRDD<Row> colesseeRdd2 = colesseeRdd.filter(contains);
         int colesseeCnt = (int) colesseeRdd2.count();
@@ -102,6 +140,7 @@ public class RddServiceImpl implements IRddService,Serializable {
 			resultList.addAll(fieldAntiFraud.unitNameAntiFraud(row, appId, "共租人单位名称", "UNIT_NAME", EPersonType.COLESSEE, tenantName));
 			resultList.addAll(fieldAntiFraud.mobileAntiFraud(row, appId, "共租人单位电话", "UNIT_TEL", EPersonType.COLESSEE, tenantName));
 		}
+        
         //联系人
         JavaRDD<Row> linkmanRdd2 = linkmanRdd.filter(contains);
         int linkmanCnt = (int) linkmanRdd2.count();
@@ -110,6 +149,7 @@ public class RddServiceImpl implements IRddService,Serializable {
 			Row row = linkmanRdd2.take(linkmanCnt).get(i);
 			resultList.addAll(fieldAntiFraud.mobileAntiFraud(row, appId, "联系人电话号码", "MOBILE", EPersonType.LINKMAN, tenantName));
 		}
+        
         //车架号
         JavaRDD<Row> financeRdd2 = financeRdd.filter(contains);
         int financeCnt = (int) financeRdd2.count();
@@ -118,11 +158,13 @@ public class RddServiceImpl implements IRddService,Serializable {
 			Row row = financeRdd2.take(financeCnt).get(i);
 			resultList.addAll(fieldAntiFraud.carVinAntiFraud(row, appId, tenantName));
 		}
+        
         //发动机号
         for (int i = 0; i < financeCnt; i++) {
 			Row row = financeRdd2.take(financeCnt).get(i);
 			resultList.addAll(fieldAntiFraud.carEnginAntiFraud(row, appId, tenantName));
 		}
+        
         //车牌号
         JavaRDD<Row> signFinanceDetailRdd2 = signFinanceDetailRdd.filter(contains);
         int signFinanceDetailCnt = (int) signFinanceDetailRdd2.count();
@@ -131,6 +173,9 @@ public class RddServiceImpl implements IRddService,Serializable {
 			Row row = signFinanceDetailRdd2.take(signFinanceDetailCnt).get(i);
 			resultList.addAll(fieldAntiFraud.plateNoAntiFraud(row, appId, tenantName));
 		}
+        
+        
+        
     	logger.info("执行完成");
 		return JSONObject.toJSONString(resultList);
 	}
@@ -154,6 +199,21 @@ public class RddServiceImpl implements IRddService,Serializable {
 		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
 		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
 		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		
+		//黑名单
+		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		
+		financeRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		tenantRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		signFinanceDetailRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		
+		tmd.put("financeRdd", financeRdd);
+		tmd.put("tenantRdd", tenantRdd);
+		tmd.put("signFinanceDetailRdd", signFinanceDetailRdd);
+		tmd.put("blackListContractRdd", blackListContractRdd);
+		tmd.put("blackListRdd", blackListRdd);
+		
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put("APP_ID", appId);
 		Contains contains = new Contains(paramMap);
@@ -204,6 +264,16 @@ public class RddServiceImpl implements IRddService,Serializable {
 //		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
 		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
 		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		
+		//黑名单
+		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		
+		tmd.put("tenantRdd", tenantRdd);
+		tmd.put("signFinanceDetailRdd", signFinanceDetailRdd);
+		tmd.put("blackListContractRdd", blackListContractRdd);
+		tmd.put("blackListRdd", blackListRdd);
+		
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put("APP_ID", appId);
 		Contains contains = new Contains(paramMap);
@@ -240,9 +310,10 @@ public class RddServiceImpl implements IRddService,Serializable {
         JavaRDD<Row> javaRdd = dataSet.javaRDD();
 //        javaRdd.persist(StorageLevel.MEMORY_ONLY());
         Map<String,Object> paramMap = new HashMap<String,Object>();
-        paramMap.put("userId", "8888");
+        paramMap.put("userId", "9999");
         JavaRDD<Row> javaRdd2 = javaRdd.filter(new Contains(paramMap));
         javaRdd2.persist(StorageLevel.MEMORY_AND_DISK());
+
 //        logger.info("javaRdd2.first():"+javaRdd2.first());
         Map rddMap2 = sc.getPersistentRDDs();
 //      logger.info("javaRdd2.count():"+javaRdd2.count());

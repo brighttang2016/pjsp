@@ -30,6 +30,7 @@ public class SynShortSenderImpl implements ISynShortSender {
 //			String sendStrFormate = new String(sendByte,"gbk");
 //			logger.info("sendStr.length:"+sendStr.length()+"|"+sendByte.length);
 			sendStr = StringUtils.leftPad(sendByte.length+"", 5, '0') + sendStr;
+			logger.info("查询完成，返回客户端");
 			logger.info("send to client:"+sendStr);
 			send = sendStr.getBytes(Charset.forName("gbk"));
 		} catch (Exception e) {

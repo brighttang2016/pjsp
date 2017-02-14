@@ -37,24 +37,25 @@ public class RddFilterImpl implements IRddFilter {
 	 * @param newFieldValue
 	 * @param result
 	 */
-	public void isBlack(String newField,String newFieldValue,HisAntiFraudResult result){
+	public void isBlack(String oldField,String oldFieldValue,HisAntiFraudResult result,JavaRDD<Row> blackListContractRdd,JavaRDD<Row> blackListRdd){
 		//黑名单数据集
-		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
-		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
+//		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+//		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
+		
 		//判断当前历史行数据是否为黑名单
 		Map<String,Object> tempParamMap = new HashMap<String,Object>();
-		if("MOBILE2".equals(newField) || "UNIT_TEL".equals(newField)){//反欺诈过程中，承租人电话号码2、单位电话均与表t_blacklist_ref_contract中的MOBILE字段相对应。
-			tempParamMap.put("MOBILE", newFieldValue);
+		if("MOBILE2".equals(oldField) || "UNIT_TEL".equals(oldField)){//反欺诈过程中，承租人电话号码2、单位电话均与表t_blacklist_ref_contract中的MOBILE字段相对应。
+			tempParamMap.put("MOBILE", oldFieldValue);
 		}else{
-			tempParamMap.put(newField, newFieldValue);
+			tempParamMap.put(oldField, oldFieldValue);
 		}
 		Contains contains = new Contains(tempParamMap);
 		//1、
 		JavaRDD<Row> blackRdd = blackListRdd.filter(contains);//t_blacklist表过滤后数据集
 		JavaRDD<Row> blackRefRdd = blackListContractRdd.filter(contains);//t_blacklist_ref_contract表过滤后数据集
-		if(blackRdd.count() > 0){
+		if(blackRdd.count() > 0){//存在数据库链接操作
 			result.setIsBlack(true);
-		}else if(blackRefRdd.count() > 0){
+		}else if(blackRefRdd.count() > 0){//存在数据库链接操作
 			result.setIsBlack(true);
 		}else{
 			result.setIsBlack(false);
@@ -78,10 +79,14 @@ public class RddFilterImpl implements IRddFilter {
         reader.option("dbtable", tableName);
         Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
         JavaRDD<Row> javaRdd = dataSet.javaRDD();
-        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+//        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
 		return javaRdd;
 	}
 	
+	/**
+	 * filt共存在3次数据访问
+	 * 过滤条件中包含APP_ID
+	 */
 	@Override
 	public List<HisAntiFraudResult> filt(JavaRDD<Row> javaRdd, String newFieldName,String newFieldValue, String newField, String oldFieldName,
 			String appId,String tenantName) {
@@ -90,15 +95,31 @@ public class RddFilterImpl implements IRddFilter {
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put(newField, newFieldValue);
 		paramMap.put("APP_ID", appId);
-		logger.info("javaRdd.count():"+javaRdd.count());
+		
+		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		
+//		logger.info("javaRdd.count():"+javaRdd.count());
 		JavaRDD<Row> filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-		int rowCnt = (int) filtRdd.count();
+		
+		filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		
+		int rowCnt = (int) filtRdd.count();//存在数据库操作
 		logger.info("rowCnt:"+rowCnt);
 		if(rowCnt > 0){
 			List<Row> rowList = filtRdd.take(rowCnt);
+			//黑名单数据集
+			/*JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+			JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
+			blackListContractRdd.persist(StorageLevel.MEMORY_AND_DISK());
+			blackListRdd.persist(StorageLevel.MEMORY_AND_DISK());*/
+			//上述变量改为从变量池取
+			TransactionMapData tmd = TransactionMapData.getInstance();
+			JavaRDD<Row> blackListContractRdd = (JavaRDD<Row>) tmd.get("blackListContractRdd");
+			JavaRDD<Row> blackListRdd = (JavaRDD<Row>) tmd.get("blackListRdd");
+			
 			//遍历历史行数据
 			for (Row row : rowList) {
-				logger.info("filt row:"+row);
+//				logger.info("filt row:"+row);
 				HisAntiFraudResult result = new HisAntiFraudResult();
 				result.setAppId(appId);
 				result.setName(tenantName);
@@ -107,26 +128,49 @@ public class RddFilterImpl implements IRddFilter {
 				result.setOldAppId(row.getAs("APP_ID").toString());
 				result.setOldFieldName(oldFieldName);
 				result.setOldFieldValue(row.getAs(newField).toString());
-				this.isBlack(newField, newFieldValue, result);
+				//测试，关闭黑名单判断
+				this.isBlack(newField, row.getAs(newField).toString(), result,blackListContractRdd,blackListRdd);
 				resultList.add(result);
 			}
+			
 		}
 		return resultList;
 	}
 
+	/**
+	 * filt共存在3次数据访问
+	 * 过滤条件中，不包含APP_ID
+	 */
 	@Override
 	public List<HisAntiFraudResult> filtWithoutAppid(JavaRDD<Row> javaRdd, String newFieldName, String newFieldValue,
 			String newField, String oldFieldName, String appId, String tenantName) {
+		
+		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 //		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put(newField, newFieldValue);
-		logger.info("javaRdd.count():"+javaRdd.count());
+//		logger.info("javaRdd.count():"+javaRdd.count());
 		JavaRDD<Row> filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-		int rowCnt = (int) filtRdd.count();
-		logger.info("rowCnt:"+rowCnt);
+		filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		
+		int rowCnt = (int) filtRdd.count();//存在数据库操作
+//		logger.info("filtWithoutAppid rowCnt:"+rowCnt);
+		
 		if(rowCnt > 0){
 			List<Row> rowList = filtRdd.take(rowCnt);
+			
+			//黑名单数据集
+			/*JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+			JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
+			blackListContractRdd.persist(StorageLevel.MEMORY_AND_DISK());
+			blackListRdd.persist(StorageLevel.MEMORY_AND_DISK());*/
+			//上述变量改为从变量池取
+			TransactionMapData tmd = TransactionMapData.getInstance();
+			JavaRDD<Row> blackListContractRdd = (JavaRDD<Row>) tmd.get("blackListContractRdd");
+			JavaRDD<Row> blackListRdd = (JavaRDD<Row>) tmd.get("blackListRdd");
+			
 			for (Row row : rowList) {
 				HisAntiFraudResult result = new HisAntiFraudResult();
 				result.setAppId(appId);
@@ -136,10 +180,12 @@ public class RddFilterImpl implements IRddFilter {
 				result.setOldAppId(row.getAs("APP_ID").toString());
 				result.setOldFieldName(oldFieldName);
 				result.setOldFieldValue(row.getAs(newField).toString());
-				this.isBlack(newField, newFieldValue, result);
+				//测试，关闭黑名单判断
+				this.isBlack(newField, newFieldValue, result,blackListContractRdd,blackListRdd);
 				resultList.add(result);
 			}
 		}
+		
 		return resultList;
 	}
 

@@ -33,7 +33,7 @@ public class SocketClient {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			String sendStr = "{'tranCode':'10001','appId':'模拟客户端"+i+"'}";
+			String sendStr = "{'tranCode':'10001','appId':'D4021701190041N1'}";
 			new Thread(new SocketClientReceiveThread(socket)).start();
 			new Thread(new SocketClientSendThread(socket,sendStr)).start();
 		}
@@ -45,7 +45,7 @@ public class SocketClient {
 	 */
 	public static void main(String[] args) {
 		SocketClient client = new SocketClient();
-		int threadNum = 5;
+		int threadNum = 10;
 		client.createThread(threadNum);
 	}
 

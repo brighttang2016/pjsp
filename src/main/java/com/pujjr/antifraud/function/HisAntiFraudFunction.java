@@ -27,7 +27,7 @@ public class HisAntiFraudFunction implements Function<Row, Boolean>{
 		while (keyIt.hasNext()) {
 			String key = keyIt.next();
 			logger.debug("key:"+key);
-			logger.info("row.getAs(key):"+row.getAs(key));
+//			logger.info("row.getAs(key):"+row.getAs(key));
 			try {
 				if(index == 0){
 					if("APP_ID".equals(key)){//条件中存在APP_ID,最终筛选出不为此APP_ID的其他所有记录

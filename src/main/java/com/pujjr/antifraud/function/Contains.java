@@ -19,15 +19,17 @@ public class Contains implements Function<Row, Boolean>{
 	}
 	@Override
 	public Boolean call(Row row) throws Exception {
-		logger.debug("row:"+row);
+//		logger.info("row:"+row);
 		boolean condition = false;
 		int index = 0;
 		Iterator<String> keyIt = (Iterator<String>) this.paramMap.keySet().iterator();
 		while (keyIt.hasNext()) {
 			String key = keyIt.next();
-			logger.debug("key:"+key);
+//			logger.info("key:"+key);
 			try {
 				if(index == 0){
+//					System.out.println(this.paramMap.get(key));
+//					System.out.println(row.getAs(key));
 					condition = this.paramMap.get(key).equals(row.getAs(key));
 				}else{
 					condition = condition && this.paramMap.get(key).equals(row.getAs(key));
@@ -37,6 +39,7 @@ public class Contains implements Function<Row, Boolean>{
 				logger.error(e);
 			}
 		}
+//		logger.info("condition:"+condition);
 		return condition;
 	}
 }
