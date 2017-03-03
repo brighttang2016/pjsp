@@ -42,9 +42,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, idNo, "ID_NO", "承租人身份证号码", appId, tenantName));
 	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, idNo, "ID_NO", "配偶身份证号码", appId, tenantName));
 	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
-	        
 			break;
-		case "002"://
+		case "002":
 			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, idNo, "ID_NO", "承租人身份证号码", appId, tenantName));
 	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, idNo, "ID_NO", "配偶身份证号码", appId, tenantName));
 	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
@@ -55,7 +54,6 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
 			break;
 		}
-//		resultList.addAll(rddFilter.filtWithoutAppid(blackListContractRdd, newFieldName, idNo, "ID_NO", "黑名单中身份证号码", appId, tenantName));
 		
 		return resultList;
 	}
@@ -161,6 +159,7 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_NAME", "承租人单位名称", appId, tenantName));
 			resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "UNIT_NAME", "配偶单位名称", appId, tenantName));
 			resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "UNIT_NAME", "共租人单位名称", appId, tenantName));
+			
 			break;
 		case "002":
 			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "UNIT_NAME", "承租人单位名称", appId, tenantName));

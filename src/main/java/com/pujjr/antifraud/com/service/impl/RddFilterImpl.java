@@ -33,7 +33,7 @@ public class RddFilterImpl implements IRddFilter {
 	private static final Logger logger = Logger.getLogger(RddFilterImpl.class);
 	
 	/**
-	 * 判断是否为黑名单
+	 * 判断是否为黑名单(存在2次数据库操作)
 	 * tom 2017年1月7日
 	 * @param newField
 	 * @param newFieldValue
@@ -100,14 +100,13 @@ public class RddFilterImpl implements IRddFilter {
 		int rowLenth = (int) uncommitApplyRdd.count();
 		List<Row> rowList = uncommitApplyRdd.take(rowLenth);
 		for (Row row : rowList) {
-			System.out.println(row.getAs("APP_ID"));
 			uncommitApplyidList.add(row.getAs("APP_ID")+"");
 		}
 		return uncommitApplyidList;
 	}
 	
 	/**
-	 * filt共存在3次数据访问
+	 * filt,存在3次数据库访问
 	 * 过滤条件中包含APP_ID
 	 */
 	@Override
@@ -117,7 +116,6 @@ public class RddFilterImpl implements IRddFilter {
 		boolean isNewFieldValueNull = "".equals(newFieldValue) || "null".equals(newFieldValue) || "NULL".equals(newFieldValue) || null == newFieldValue;//所匹配值是否为空
 		JavaRDD<Row> filtRdd = null;//反欺诈出来的RDD
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
-//		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put(newField, newFieldValue);//newField：待匹配字段名 	newFieldnewFieldValue:待匹配值
 		paramMap.put("APP_ID", appId);//过滤条件中加入APP_ID,在过滤的时候，将排除改app_id的记录
@@ -264,9 +262,10 @@ public class RddFilterImpl implements IRddFilter {
 			return resultList;
 		String invoceCode = row.getAs("INVOICE_CODE").toString();
 		String invoceNo = row.getAs("INVOICE_NO").toString();
-		paramMap.put("APP_ID", row.getAs("APP_ID"));
+		paramMap.put("APP_ID", appId);
 		paramMap.put("INVOICE_CODE", invoceCode);
 		paramMap.put("INVOICE_NO", invoceNo);
+		System.out.println("signFinanceDetailRdd.count():"+signFinanceDetailRdd.count());
 		JavaRDD<Row> filtRdd = signFinanceDetailRdd.filter(new HisAntiFraudFunction(paramMap));
 		int rowCnt = (int) filtRdd.count();
 		logger.info("rowCnt:"+rowCnt);
@@ -278,7 +277,7 @@ public class RddFilterImpl implements IRddFilter {
 				result.setName(tenantName);
 				result.setNewFieldName("发票代码+发票号码");
 				result.setNewFieldValue(invoceCode+" "+invoceNo);
-				result.setOldAppId(row.getAs("APP_ID").toString());
+				result.setOldAppId(rowTemp.getAs("APP_ID").toString());
 				result.setOldFieldName("发票代码+发票号码");
 				result.setOldFieldValue(rowTemp.getAs("INVOICE_CODE")+" "+rowTemp.getAs("INVOICE_NO"));
 				result.setIsBlack(false);

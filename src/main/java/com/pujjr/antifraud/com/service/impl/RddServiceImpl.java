@@ -80,8 +80,6 @@ public class RddServiceImpl implements IRddService,Serializable {
         paramMap.put("APP_ID", appId);
         Contains contains = new Contains(paramMap);
         JavaRDD<Row> tenantRdd2 = tenantRdd.filter(contains);
-//        tenantRdd2.persist(StorageLevel.MEMORY_AND_DISK());
-//        logger.info("tenantRdd2.count():"+tenantRdd2.count());
         int tenantCnt = (int) tenantRdd2.count();//存在数据库链接操作
         Row tenantRow = null;
         String tenantName = "";
@@ -104,6 +102,7 @@ public class RddServiceImpl implements IRddService,Serializable {
         }else{
         	return JSONObject.toJSONString(resultList);
         }
+        
         
         //配偶
         JavaRDD<Row> spouseRdd2 = spouseRdd.filter(contains);
