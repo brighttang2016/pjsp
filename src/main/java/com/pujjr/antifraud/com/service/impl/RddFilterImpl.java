@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.configuration.tree.UnionCombiner;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -17,6 +18,7 @@ import org.apache.spark.storage.StorageLevel;
 import com.pujjr.antifraud.com.service.IRddFilter;
 import com.pujjr.antifraud.function.Contains;
 import com.pujjr.antifraud.function.HisAntiFraudFunction;
+import com.pujjr.antifraud.function.UnCommitApplyFiltFunction;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
@@ -66,21 +68,42 @@ public class RddFilterImpl implements IRddFilter {
 		JavaSparkContext sc = (JavaSparkContext) TransactionMapData.getInstance().get("sc");
         SQLContext sqlContext = new SQLContext(sc);
         DataFrameReader reader = sqlContext.read().format("jdbc");
-        reader.option("url",Utils.getProperty("url").toString().trim());//数据库路径
-        reader.option("driver",Utils.getProperty("driver").toString().trim());
-        reader.option("user",Utils.getProperty("username").toString().trim());
-        reader.option("password",Utils.getProperty("password").toString().trim());
+        reader.option("url",Utils.getProperty("url")+"");//数据库路径
+        reader.option("driver",Utils.getProperty("driver")+"");
+        reader.option("user",Utils.getProperty("username")+"");
+        reader.option("password",Utils.getProperty("password")+"");
         return reader;
 	}
 	
 	@Override
 	public JavaRDD<Row> getTableRdd(String tableName) {
+		logger.info("tableName:"+tableName);
 		DataFrameReader reader = this.getReader();
         reader.option("dbtable", tableName);
         Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
         JavaRDD<Row> javaRdd = dataSet.javaRDD();
 //        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
 		return javaRdd;
+	}
+	@Override
+	public JavaRDD<Row> filtUncommitRecord(List<String> uncommitAppidList,JavaRDD<Row> javaRdd){
+		Map<String,Object> paramMap = new HashMap<String,Object>();
+		paramMap.put("uncommitAppidList", uncommitAppidList);
+		return javaRdd.filter(new UnCommitApplyFiltFunction(paramMap));
+	}
+	@Override
+	public List<String> getUncommitAppidList(JavaRDD<Row> applyRdd){
+		List<String> uncommitApplyidList = new ArrayList<String>();
+		Map<String,Object> paramMap = new HashMap<String,Object>();
+		paramMap.put("STATUS", "sqdzt01");//申请表状态为"未提交"
+		JavaRDD<Row> uncommitApplyRdd = applyRdd.filter(new UnCommitApplyFiltFunction(paramMap));
+		int rowLenth = (int) uncommitApplyRdd.count();
+		List<Row> rowList = uncommitApplyRdd.take(rowLenth);
+		for (Row row : rowList) {
+			System.out.println(row.getAs("APP_ID"));
+			uncommitApplyidList.add(row.getAs("APP_ID")+"");
+		}
+		return uncommitApplyidList;
 	}
 	
 	/**
@@ -90,21 +113,47 @@ public class RddFilterImpl implements IRddFilter {
 	@Override
 	public List<HisAntiFraudResult> filt(JavaRDD<Row> javaRdd, String newFieldName,String newFieldValue, String newField, String oldFieldName,
 			String appId,String tenantName) {
+		int rowCnt = 0;//反欺诈出来的匹配记录数；
+		boolean isNewFieldValueNull = "".equals(newFieldValue) || "null".equals(newFieldValue) || "NULL".equals(newFieldValue) || null == newFieldValue;//所匹配值是否为空
+		JavaRDD<Row> filtRdd = null;//反欺诈出来的RDD
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 //		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
-		paramMap.put(newField, newFieldValue);
-		paramMap.put("APP_ID", appId);
+		paramMap.put(newField, newFieldValue);//newField：待匹配字段名 	newFieldnewFieldValue:待匹配值
+		paramMap.put("APP_ID", appId);//过滤条件中加入APP_ID,在过滤的时候，将排除改app_id的记录
+		
+		//过滤未提交订单（未提交订单的所有相关信息，不参与反欺诈计算）
+		JavaRDD<Row> applyRdd = this.getTableRdd("t_apply");
+		List<String> uncommitApplyIdList = this.getUncommitAppidList(applyRdd);
+		javaRdd = this.filtUncommitRecord(uncommitApplyIdList, javaRdd);
 		
 		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		/**
+		 * 过滤无效电话号码
+		 * 过滤原因：1.0承租人表中，单位电话："0"：10564条记录;     "/":436条记录;    "1":168条记录     "0997":78条记录。并且，还有很多其他相同无效号码，若待匹配字符串刚好为这些无效字符，将反出大量无效数据。
+		 */
+		/*
+		 * 执行反欺诈过滤查询条件：
+		 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
+		 */
+		if(newField.equals("MOBILE") || newField.equals("MOBILE2") || newField.equals("UNIT_TEL")){
+			String telValue = newFieldValue;//电话号码值
+			if(telValue != null){
+				if(telValue.length() < 7 || telValue.length() > 12){
+					rowCnt = 0;
+					return resultList;
+				}else if(!isNewFieldValueNull){
+					filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+					filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+					rowCnt = (int) filtRdd.count();//存在数据库操作
+				}
+			}
+		}else if(!(isNewFieldValueNull)){
+			filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+			filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+			rowCnt = (int) filtRdd.count();//存在数据库操作
+		}
 		
-//		logger.info("javaRdd.count():"+javaRdd.count());
-		JavaRDD<Row> filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-		
-		filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-		
-		int rowCnt = (int) filtRdd.count();//存在数据库操作
-		logger.info("rowCnt:"+rowCnt);
 		if(rowCnt > 0){
 			List<Row> rowList = filtRdd.take(rowCnt);
 			//黑名单数据集
@@ -144,23 +193,39 @@ public class RddFilterImpl implements IRddFilter {
 	@Override
 	public List<HisAntiFraudResult> filtWithoutAppid(JavaRDD<Row> javaRdd, String newFieldName, String newFieldValue,
 			String newField, String oldFieldName, String appId, String tenantName) {
-		
+		int rowCnt = 0;//反欺诈出来的匹配记录数；
+		boolean isNewFieldValueNull = "".equals(newFieldValue) || "null".equals(newFieldValue) || "NULL".equals(newFieldValue) || null == newFieldValue;//所匹配值是否为空
+		JavaRDD<Row> filtRdd = null;
 		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
 		
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 //		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put(newField, newFieldValue);
-//		logger.info("javaRdd.count():"+javaRdd.count());
-		JavaRDD<Row> filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-		filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-		
-		int rowCnt = (int) filtRdd.count();//存在数据库操作
-//		logger.info("filtWithoutAppid rowCnt:"+rowCnt);
+		/**
+		 * 执行反欺诈过滤查询条件：
+		 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
+		 */
+		if(newField.equals("MOBILE") || newField.equals("MOBILE2") || newField.equals("UNIT_TEL")){
+			String telValue = newFieldValue;//电话号码值
+			if(telValue != null){
+				if(telValue.length() < 7 || telValue.length() > 12){
+					rowCnt = 0;
+					return resultList;
+				}else if(!isNewFieldValueNull){
+					filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+					filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+					rowCnt = (int) filtRdd.count();//存在数据库操作
+				}
+			}
+		}else if(!(isNewFieldValueNull)){
+			filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+			filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+			rowCnt = (int) filtRdd.count();//存在数据库操作
+		}
 		
 		if(rowCnt > 0){
 			List<Row> rowList = filtRdd.take(rowCnt);
-			
 			//黑名单数据集
 			/*JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
 			JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");

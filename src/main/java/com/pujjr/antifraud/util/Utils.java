@@ -2,17 +2,9 @@ package com.pujjr.antifraud.util;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.commons.configuration.PropertiesConfiguration.PropertiesReader;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-
-import com.pujjr.antifraud.test.PropertyReadTest;
 
 /**
  * @author tom

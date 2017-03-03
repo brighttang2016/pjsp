@@ -20,13 +20,13 @@ public class HisAntiFraudFunction implements Function<Row, Boolean>{
 	}
 	@Override
 	public Boolean call(Row row) throws Exception {
-		logger.debug("row:"+row);
+//		logger.debug("row:"+row);
 		boolean condition = false;//当前行是否满足所有过滤条件，默认false
 		int index = 0;//当前遍历行索引
 		Iterator<String> keyIt = (Iterator<String>) this.paramMap.keySet().iterator();
 		while (keyIt.hasNext()) {
 			String key = keyIt.next();
-			logger.debug("key:"+key);
+//			logger.info("key:"+key);
 //			logger.info("row.getAs(key):"+row.getAs(key));
 			try {
 				if(index == 0){
