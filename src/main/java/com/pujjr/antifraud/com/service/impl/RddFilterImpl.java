@@ -126,30 +126,39 @@ public class RddFilterImpl implements IRddFilter {
 		javaRdd = this.filtUncommitRecord(uncommitApplyIdList, javaRdd);
 		
 		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
-		/**
-		 * 过滤无效电话号码
-		 * 过滤原因：1.0承租人表中，单位电话："0"：10564条记录;     "/":436条记录;    "1":168条记录     "0997":78条记录。并且，还有很多其他相同无效号码，若待匹配字符串刚好为这些无效字符，将反出大量无效数据。
-		 */
-		/*
-		 * 执行反欺诈过滤查询条件：
-		 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
-		 */
-		if(newField.equals("MOBILE") || newField.equals("MOBILE2") || newField.equals("UNIT_TEL")){
-			String telValue = newFieldValue;//电话号码值
-			if(telValue != null){
-				if(telValue.length() < 7 || telValue.length() > 12){
-					rowCnt = 0;
-					return resultList;
-				}else if(!isNewFieldValueNull){
-					filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-					filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-					rowCnt = (int) filtRdd.count();//存在数据库操作
-				}
+		
+		if(newField.equals("UNIT_NAME")){
+			if(newFieldValue.length() > 4){//单位名称大于4个字，参与反欺诈
+				filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
-		}else if(!(isNewFieldValueNull)){
-			filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-			filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-			rowCnt = (int) filtRdd.count();//存在数据库操作
+		}else{
+			/**
+			 * 过滤无效电话号码
+			 * 过滤原因：1.0承租人表中，单位电话："0"：10564条记录;     "/":436条记录;    "1":168条记录     "0997":78条记录。并且，还有很多其他相同无效号码，若待匹配字符串刚好为这些无效字符，将反出大量无效数据。
+			 */
+			/*
+			 * 执行反欺诈过滤查询条件：
+			 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
+			 */
+			if(newField.equals("MOBILE") || newField.equals("MOBILE2") || newField.equals("UNIT_TEL")){
+				String telValue = newFieldValue;//电话号码值
+				if(telValue != null){
+					if(telValue.length() < 7 || telValue.length() > 12){
+						rowCnt = 0;
+						return resultList;
+					}else if(!isNewFieldValueNull){
+						filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+						filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+						rowCnt = (int) filtRdd.count();//存在数据库操作
+					}
+				}
+			}else if(!(isNewFieldValueNull)){//值不为空
+				filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+				rowCnt = (int) filtRdd.count();//存在数据库操作
+			}
 		}
 		
 		if(rowCnt > 0){
@@ -200,26 +209,34 @@ public class RddFilterImpl implements IRddFilter {
 //		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put(newField, newFieldValue);
-		/**
-		 * 执行反欺诈过滤查询条件：
-		 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
-		 */
-		if(newField.equals("MOBILE") || newField.equals("MOBILE2") || newField.equals("UNIT_TEL")){
-			String telValue = newFieldValue;//电话号码值
-			if(telValue != null){
-				if(telValue.length() < 7 || telValue.length() > 12){
-					rowCnt = 0;
-					return resultList;
-				}else if(!isNewFieldValueNull){
-					filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-					filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-					rowCnt = (int) filtRdd.count();//存在数据库操作
-				}
+		if(newField.equals("UNIT_NAME")){
+			if(newFieldValue.length() > 4){//单位名称大于4个字，参与反欺诈
+				filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
-		}else if(!(isNewFieldValueNull)){
-			filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
-			filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-			rowCnt = (int) filtRdd.count();//存在数据库操作
+		}else{
+			/**
+			 * 执行反欺诈过滤查询条件：
+			 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
+			 */
+			if(newField.equals("MOBILE") || newField.equals("MOBILE2") || newField.equals("UNIT_TEL")){
+				String telValue = newFieldValue;//电话号码值
+				if(telValue != null){
+					if(telValue.length() < 7 || telValue.length() > 12){
+						rowCnt = 0;
+						return resultList;
+					}else if(!isNewFieldValueNull){
+						filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+						filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+						rowCnt = (int) filtRdd.count();//存在数据库操作
+					}
+				}
+			}else if(!(isNewFieldValueNull)){
+				filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
+				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
+				rowCnt = (int) filtRdd.count();//存在数据库操作
+			}
 		}
 		
 		if(rowCnt > 0){
