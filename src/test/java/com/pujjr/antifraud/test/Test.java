@@ -14,6 +14,7 @@ public class Test {
 		// TODO Auto-generated method stub
 		String test = "中国公司";
 		System.out.println(test.length());
+		System.out.println("/".equals("/"));
 	}
 
 }

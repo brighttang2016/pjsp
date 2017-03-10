@@ -133,7 +133,7 @@ public class RddFilterImpl implements IRddFilter {
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
 				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
-		}else{
+		}else if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "/".equals(newFieldValue) || ".".equals(newFieldValue) )){
 			/**
 			 * 过滤无效电话号码
 			 * 过滤原因：1.0承租人表中，单位电话："0"：10564条记录;     "/":436条记录;    "1":168条记录     "0997":78条记录。并且，还有很多其他相同无效号码，若待匹配字符串刚好为这些无效字符，将反出大量无效数据。
@@ -215,7 +215,7 @@ public class RddFilterImpl implements IRddFilter {
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
 				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
-		}else{
+		}else if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "/".equals(newFieldValue) || ".".equals(newFieldValue) )){
 			/**
 			 * 执行反欺诈过滤查询条件：
 			 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空

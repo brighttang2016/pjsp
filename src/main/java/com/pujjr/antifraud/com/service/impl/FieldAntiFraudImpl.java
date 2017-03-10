@@ -226,7 +226,11 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		if(row.getAs("GPS_WIRED_NO") == null)
 			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRED_NO").toString();
-		resultList.addAll(rddFilter.filt(spouseRdd, "有线GPS编码", newFieldValue, "GPS_WIRED_NO", "有线GPS编码", appId, tenantName));
+//		if(newFieldValue != null){
+//			if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "//".equals(newFieldValue) || "\\.".equals(newFieldValue) )){
+				resultList.addAll(rddFilter.filt(spouseRdd, "有线GPS编码", newFieldValue, "GPS_WIRED_NO", "有线GPS编码", appId, tenantName));
+//			}
+//		}
 		return resultList;
 	}
 
@@ -238,7 +242,11 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		if(row.getAs("GPS_WIRELESS_NO") == null)
 			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRELESS_NO").toString();
-		resultList.addAll(rddFilter.filt(spouseRdd, "无线GPS编码", newFieldValue, "GPS_WIRELESS_NO", "无线GPS编码", appId, tenantName));
+//		if(newFieldValue != null){
+//			if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "//".equals(newFieldValue) || "\\.".equals(newFieldValue) )){
+				resultList.addAll(rddFilter.filt(spouseRdd, "无线GPS编码", newFieldValue, "GPS_WIRELESS_NO", "无线GPS编码", appId, tenantName));
+//			}
+//		}
 		return resultList;
 	}
 
