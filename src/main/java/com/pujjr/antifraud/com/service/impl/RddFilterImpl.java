@@ -176,12 +176,15 @@ public class RddFilterImpl implements IRddFilter {
 			//遍历历史行数据
 			for (Row row : rowList) {
 //				logger.info("filt row:"+row);
+				String oldAppId = row.getAs("APP_ID").toString();
+				if(appId.equals(oldAppId))
+					continue;
 				HisAntiFraudResult result = new HisAntiFraudResult();
 				result.setAppId(appId);
 				result.setName(tenantName);
 				result.setNewFieldName(newFieldName);
 				result.setNewFieldValue(newFieldValue);
-				result.setOldAppId(row.getAs("APP_ID").toString());
+				result.setOldAppId(oldAppId);
 				result.setOldFieldName(oldFieldName);
 				result.setOldFieldValue(row.getAs(newField).toString());
 				//测试，关闭黑名单判断
@@ -204,7 +207,7 @@ public class RddFilterImpl implements IRddFilter {
 		boolean isNewFieldValueNull = "".equals(newFieldValue) || "null".equals(newFieldValue) || "NULL".equals(newFieldValue) || null == newFieldValue;//所匹配值是否为空
 		JavaRDD<Row> filtRdd = null;
 		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
-		
+
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 //		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
@@ -252,12 +255,15 @@ public class RddFilterImpl implements IRddFilter {
 			JavaRDD<Row> blackListRdd = (JavaRDD<Row>) tmd.get("blackListRdd");
 			
 			for (Row row : rowList) {
+				String oldAppId = row.getAs("APP_ID").toString();
+				if(appId.equals(oldAppId))
+					continue;
 				HisAntiFraudResult result = new HisAntiFraudResult();
 				result.setAppId(appId);
 				result.setName(tenantName);
 				result.setNewFieldName(newFieldName);
 				result.setNewFieldValue(newFieldValue);
-				result.setOldAppId(row.getAs("APP_ID").toString());
+				result.setOldAppId(oldAppId);
 				result.setOldFieldName(oldFieldName);
 				result.setOldFieldValue(row.getAs(newField).toString());
 				//测试，关闭黑名单判断

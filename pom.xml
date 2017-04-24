@@ -4,7 +4,7 @@
 
   <groupId>com.pujjr</groupId>
   <artifactId>pjsp</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0.20170424-RELEASE</version>
 
   <name>pjsp</name>
   <url>http://maven.apache.org</url>
@@ -98,19 +98,11 @@
 			<configuration>
 	          <transformers>
 			     <transformer implementation = "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-				 	<!-- <mainClass>com.pujjr.antifraud.http.AntiFraudHttpServer</mainClass> -->
 				 	<mainClass>com.pujjr.antifraud.com.SocketServer</mainClass>
 			     </transformer>
 		  	  </transformers>
 	        </configuration>
 			<executions>
-				<!-- <execution>
-					<phase>package</phase>
-					<goals>
-						<goal>shade</goal>
-					</goals>
-				</execution>
-				 -->
 				<execution>
 			        <phase>package</phase>
 			        <goals>

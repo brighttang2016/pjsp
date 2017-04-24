@@ -26,7 +26,7 @@ public class Utils {
 		path = Utils.class.getClassLoader().getResource("").getPath();
 		logger.info("path:"+path);
 		try {
-			pops.load(new FileInputStream(new File(path+"//"+"antifraud.properties")));
+			pops.load(new FileInputStream(new File(path+File.separator+"antifraud.properties")));
 //			pops.load(new FileInputStream(new File(path)));
 			value = pops.get(key);
 		} catch (Exception e) {
