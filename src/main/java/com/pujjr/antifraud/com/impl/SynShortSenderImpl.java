@@ -38,8 +38,8 @@ public class SynShortSenderImpl implements ISynShortSender {
             @Override
             public void operationComplete(ChannelFuture future) {
                 assert f == future;
-               /* ctx.close();
-                System.out.println("服务端已主动断开链接");*/
+                ctx.close();
+                System.out.println("服务端已主动断开链接");
             }
         });
 	}
