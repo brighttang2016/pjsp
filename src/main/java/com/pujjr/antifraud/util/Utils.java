@@ -24,7 +24,7 @@ public class Utils {
 		String path;
 //		path = Utils.class.getClassLoader().getResource("antifraud.properties").getPath();
 		path = Utils.class.getClassLoader().getResource("").getPath();
-		logger.info("path:"+path);
+		logger.info("---------》配置文件antifraud.properties读取路径path:"+path);
 		try {
 			pops.load(new FileInputStream(new File(path+File.separator+"antifraud.properties")));
 //			pops.load(new FileInputStream(new File(path)));

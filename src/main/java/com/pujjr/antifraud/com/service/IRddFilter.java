@@ -62,4 +62,10 @@ public interface IRddFilter {
 	public List<HisAntiFraudResult> filtWithoutAppid(JavaRDD<Row> javaRdd,String newFieldName,String newFieldValue,String newField,String oldFieldName,String appId,String tenantName);
 	public List<HisAntiFraudResult> filtInvoceCodeAndNo(Row row,String appId,String tenantName);
 	public List<HisAntiFraudResult> filtInvoceAreaId(Row row,String appId,String tenantName);
+	/**
+	 * 数据有效性验证
+	 * @param fieldData
+	 * @return
+	 */
+	public boolean isValidData(String fieldData);
 }

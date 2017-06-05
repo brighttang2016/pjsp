@@ -41,7 +41,7 @@ public class SynShortReceiverImpl implements ISynShortReceiver{
 		
 		sendStr = rddServiceImp.doService(tranCode, appId);
 		
-		//返回空数组(反空测试打开)
+//		返回空数组(反空测试打开)
 //		sendStr = "[]";
 		long timeEnd = System.currentTimeMillis();
 	    logger.info("执行完成，耗时："+(timeEnd-timeBegin)/1000);

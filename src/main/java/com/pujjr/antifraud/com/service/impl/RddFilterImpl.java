@@ -133,7 +133,8 @@ public class RddFilterImpl implements IRddFilter {
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
 				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
-		}else if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "/".equals(newFieldValue) || ".".equals(newFieldValue) )){
+//		}else if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "/".equals(newFieldValue) || ".".equals(newFieldValue) )){
+		}else if(this.isValidData(newFieldValue)){
 			/**
 			 * 过滤无效电话号码
 			 * 过滤原因：1.0承租人表中，单位电话："0"：10564条记录;     "/":436条记录;    "1":168条记录     "0997":78条记录。并且，还有很多其他相同无效号码，若待匹配字符串刚好为这些无效字符，将反出大量无效数据。
@@ -218,7 +219,8 @@ public class RddFilterImpl implements IRddFilter {
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
 				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
-		}else if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "/".equals(newFieldValue) || ".".equals(newFieldValue) )){
+//		}else if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "/".equals(newFieldValue) || ".".equals(newFieldValue) )){
+		}else if(this.isValidData(newFieldValue)){	
 			/**
 			 * 执行反欺诈过滤查询条件：
 			 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
@@ -338,5 +340,21 @@ public class RddFilterImpl implements IRddFilter {
 			}
 		}*/
 		return resultList;
+	}
+
+	@Override
+	public boolean isValidData(String fieldData) {
+		boolean isValid = true;
+		//无效数据规则库
+		/**
+		 * 有线gps和无线pgs号码存在不规则的情况。
+		 */
+		String[] ruleBaseDatas = new String[]{"","null","0","/",".","000","0000","00000","000000","0000000","00000000","000000000","0000000000","00000000000","000000000000","0000000000000","00000000000000","000000000000000"};
+		for (String ruleBaseData : ruleBaseDatas) {
+			if(ruleBaseData.equals(fieldData)){
+				isValid = false;
+			}
+		}
+		return isValid;
 	}
 }
