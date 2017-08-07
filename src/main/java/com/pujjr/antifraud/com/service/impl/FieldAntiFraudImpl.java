@@ -40,18 +40,18 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		switch(personType.getTypeCode()){
 		case "001"://承租人
 			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, idNo, "ID_NO", "承租人身份证号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, idNo, "ID_NO", "配偶身份证号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, idNo, "ID_NO", "配偶身份证号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
 			break;
 		case "002":
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, idNo, "ID_NO", "承租人身份证号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, idNo, "ID_NO", "配偶身份证号码", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, idNo, "ID_NO", "承租人身份证号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, idNo, "ID_NO", "配偶身份证号码", appId, tenantName));
 	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
 			break;
 		case "003":
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, idNo, "ID_NO", "承租人身份证号码", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, idNo, "ID_NO", "承租人身份证号码", appId, tenantName));
 	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, idNo, "ID_NO", "配偶身份证号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
 			break;
 		}
 		
@@ -91,45 +91,45 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 			
 			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_TEL", "承租人单位电话", appId, tenantName));
 			
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "MOBILE", "配偶电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "MOBILE", "配偶电话号码", appId, tenantName));
 	        
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "UNIT_TEL", "配偶单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "UNIT_TEL", "配偶单位电话", appId, tenantName));
 	        
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
 	        
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
 	       
-	        resultList.addAll(rddFilter.filtWithoutAppid(linkmanRdd, newFieldName, newFieldValue, "MOBILE", "联系人电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(linkmanRdd, newFieldName, newFieldValue, "MOBILE", "联系人电话号码", appId, tenantName));
 	         
 			break;
 		case "002":
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "MOBILE", "承租人电话号码1", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "MOBILE2", "承租人电话号码2", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "UNIT_TEL", "承租人单位电话", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "MOBILE", "配偶电话号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "UNIT_TEL", "配偶单位电话", appId, tenantName));
-	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(linkmanRdd, newFieldName, newFieldValue, "MOBILE", "联系人电话号码", appId, tenantName));
-			break;
-		case "003":
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "MOBILE", "承租人电话号码1", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "MOBILE2", "承租人电话号码2", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "UNIT_TEL", "承租人单位电话", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "MOBILE", "承租人电话号码1", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "MOBILE2", "承租人电话号码2", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_TEL", "承租人单位电话", appId, tenantName));
 	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "MOBILE", "配偶电话号码", appId, tenantName));
 	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "UNIT_TEL", "配偶单位电话", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(linkmanRdd, newFieldName, newFieldValue, "MOBILE", "联系人电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(linkmanRdd, newFieldName, newFieldValue, "MOBILE", "联系人电话号码", appId, tenantName));
+			break;
+		case "003":
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "MOBILE", "承租人电话号码1", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "MOBILE2", "承租人电话号码2", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_TEL", "承租人单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "MOBILE", "配偶电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "UNIT_TEL", "配偶单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(linkmanRdd, newFieldName, newFieldValue, "MOBILE", "联系人电话号码", appId, tenantName));
 			break;
 		case "004":
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "MOBILE", "承租人电话号码1", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "MOBILE2", "承租人电话号码2", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "UNIT_TEL", "承租人单位电话", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "MOBILE", "配偶电话号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "UNIT_TEL", "配偶单位电话", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
-	        resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "MOBILE", "承租人电话号码1", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "MOBILE2", "承租人电话号码2", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_TEL", "承租人单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "MOBILE", "配偶电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "UNIT_TEL", "配偶单位电话", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "MOBILE", "共租人电话号码", appId, tenantName));
+	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_TEL", "共租人单位电话", appId, tenantName));
 	        resultList.addAll(rddFilter.filt(linkmanRdd, newFieldName, newFieldValue, "MOBILE", "联系人电话号码", appId, tenantName));
 			break;
 		}
@@ -157,22 +157,22 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		switch(personType.getTypeCode()){
 		case "001":
 			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_NAME", "承租人单位名称", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "UNIT_NAME", "配偶单位名称", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "UNIT_NAME", "共租人单位名称", appId, tenantName));
+			resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "UNIT_NAME", "配偶单位名称", appId, tenantName));
+			resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_NAME", "共租人单位名称", appId, tenantName));
 			
 			break;
 		case "002":
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "UNIT_NAME", "承租人单位名称", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(spouseRdd, newFieldName, newFieldValue, "UNIT_NAME", "配偶单位名称", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_NAME", "承租人单位名称", appId, tenantName));
+			resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "UNIT_NAME", "配偶单位名称", appId, tenantName));
 			resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_NAME", "共租人单位名称", appId, tenantName));
 			break;
 		case "003":
-			resultList.addAll(rddFilter.filtWithoutAppid(tenantRdd, newFieldName, newFieldValue, "UNIT_NAME", "承租人单位名称", appId, tenantName));
+			resultList.addAll(rddFilter.filt(tenantRdd, newFieldName, newFieldValue, "UNIT_NAME", "承租人单位名称", appId, tenantName));
 			resultList.addAll(rddFilter.filt(spouseRdd, newFieldName, newFieldValue, "UNIT_NAME", "配偶单位名称", appId, tenantName));
-			resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "UNIT_NAME", "共租人单位名称", appId, tenantName));
+			resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "UNIT_NAME", "共租人单位名称", appId, tenantName));
 			break;
 		}
-//      resultList.addAll(rddFilter.filtWithoutAppid(colesseeRdd, newFieldName, newFieldValue, "ID_NO", "黑名单", appId, tenantName));
+//      resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, newFieldValue, "ID_NO", "黑名单", appId, tenantName));
 		return resultList;
 	}
 

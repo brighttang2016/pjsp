@@ -4,7 +4,7 @@
 
   <groupId>com.pujjr</groupId>
   <artifactId>pjsp</artifactId>
-  <version>1.0.1.20170625-RELEASE</version>
+  <version>1.0.2.20170720-RELEASE</version>
 
   <name>pjsp</name>
   <url>http://maven.apache.org</url>
@@ -37,6 +37,12 @@
 	    <version>2.11.5</version>
 	    <scope>provided</scope>
 	</dependency> 
+	
+	<dependency>
+	    <groupId>org.scala-lang</groupId>
+	    <artifactId>scala-xml</artifactId>
+	    <version>2.11.0-M4</version>
+	</dependency>
 	
 	<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-hive_2.10 -->
 	 <dependency>
