@@ -31,7 +31,7 @@ import scala.annotation.meta.param;
  */
 public class RddFilterImpl implements IRddFilter {
 	private static final Logger logger = Logger.getLogger(RddFilterImpl.class);
-	
+	TransactionMapData tmd = TransactionMapData.getInstance();
 	/**
 	 * 判断是否为黑名单(存在2次数据库操作)
 	 * tom 2017年1月7日
@@ -97,8 +97,10 @@ public class RddFilterImpl implements IRddFilter {
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put("STATUS", "sqdzt01");//申请表状态为"未提交"
 		JavaRDD<Row> uncommitApplyRdd = applyRdd.filter(new UnCommitApplyFiltFunction(paramMap));
-		int rowLenth = (int) uncommitApplyRdd.count();
-		List<Row> rowList = uncommitApplyRdd.take(rowLenth);
+		uncommitApplyRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		/*int rowLenth = (int) uncommitApplyRdd.count();
+		List<Row> rowList = uncommitApplyRdd.take(rowLenth);*/
+		List<Row> rowList = uncommitApplyRdd.collect();
 		for (Row row : rowList) {
 			uncommitApplyidList.add(row.getAs("APP_ID")+"");
 		}
@@ -121,8 +123,10 @@ public class RddFilterImpl implements IRddFilter {
 		paramMap.put("APP_ID", appId);//过滤条件中加入APP_ID,在过滤的时候，将排除改app_id的记录
 		
 		//过滤未提交订单（未提交订单的所有相关信息，不参与反欺诈计算）
-		JavaRDD<Row> applyRdd = this.getTableRdd("t_apply");
-		List<String> uncommitApplyIdList = this.getUncommitAppidList(applyRdd);
+//		JavaRDD<Row> applyRdd = this.getTableRdd("t_apply");
+//		JavaRDD<Row> applyRdd = (JavaRDD<Row>) tmd.get("applyRdd");
+//		List<String> uncommitApplyIdList = this.getUncommitAppidList(applyRdd);
+		List<String> uncommitApplyIdList = (List<String>) tmd.get("uncommitApplyIdList");
 		javaRdd = this.filtUncommitRecord(uncommitApplyIdList, javaRdd);
 		
 		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
@@ -133,7 +137,6 @@ public class RddFilterImpl implements IRddFilter {
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
 				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
-//		}else if(!("".equals(newFieldValue) || "null".equals(newFieldValue.toLowerCase()) || "0".equals(newFieldValue) || "/".equals(newFieldValue) || ".".equals(newFieldValue) )){
 		}else if(this.isValidData(newFieldValue)){
 			/**
 			 * 过滤无效电话号码
@@ -152,23 +155,25 @@ public class RddFilterImpl implements IRddFilter {
 					}else if(!isNewFieldValueNull){
 						filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
 						filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-						rowCnt = (int) filtRdd.count();//存在数据库操作
+//						rowCnt = (int) filtRdd.count();//存在数据库操作
 					}
 				}
 			}else if(!(isNewFieldValueNull)){//值不为空
 				filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
-				rowCnt = (int) filtRdd.count();//存在数据库操作
+//				rowCnt = (int) filtRdd.count();//存在数据库操作
 			}
 		}
 		
-		if(rowCnt > 0){
-			List<Row> rowList = filtRdd.take(rowCnt);
-			//黑名单数据集
-			/*JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
-			JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
-			blackListContractRdd.persist(StorageLevel.MEMORY_AND_DISK());
-			blackListRdd.persist(StorageLevel.MEMORY_AND_DISK());*/
+//		if(rowCnt > 0){
+//			List<Row> rowList = filtRdd.take(rowCnt);
+			List<Row> rowList = new ArrayList<Row>();
+			try {
+				rowList = filtRdd.collect();
+			} catch (Exception e) {
+				// TODO: handle exception
+			}
+			
 			//上述变量改为从变量池取
 			TransactionMapData tmd = TransactionMapData.getInstance();
 			JavaRDD<Row> blackListContractRdd = (JavaRDD<Row>) tmd.get("blackListContractRdd");
@@ -193,7 +198,7 @@ public class RddFilterImpl implements IRddFilter {
 				resultList.add(result);
 			}
 			
-		}
+//		}
 		return resultList;
 	}
 

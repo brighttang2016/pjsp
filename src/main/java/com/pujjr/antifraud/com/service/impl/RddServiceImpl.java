@@ -52,6 +52,7 @@ public class RddServiceImpl implements IRddService,Serializable {
         List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		
 		IRddFilter rddFilter = new RddFilterImpl();
+		
 		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
 		JavaRDD<Row> colesseeRdd = rddFilter.getTableRdd("t_apply_colessee");
 		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_apply_spouse");
@@ -63,6 +64,10 @@ public class RddServiceImpl implements IRddService,Serializable {
 		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
 		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
 		
+		JavaRDD<Row> applyRdd = rddFilter.getTableRdd("t_apply");
+		//未提交订单查询
+		List<String> uncommitApplyIdList = rddFilter.getUncommitAppidList(applyRdd);
+		tmd.put("uncommitApplyIdList", uncommitApplyIdList);
 		
 		tmd.put("tenantRdd", tenantRdd);
 		tmd.put("colesseeRdd", colesseeRdd);
@@ -74,6 +79,8 @@ public class RddServiceImpl implements IRddService,Serializable {
 		tmd.put("blackListContractRdd", blackListContractRdd);
 		tmd.put("blackListRdd", blackListRdd);
 		
+		tmd.put("applyRdd", applyRdd);
+		
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		IFieldAntiFraud fieldAntiFraud = new FieldAntiFraudImpl();
 		//承租人
@@ -81,10 +88,12 @@ public class RddServiceImpl implements IRddService,Serializable {
         Contains contains = new Contains(paramMap);
         JavaRDD<Row> tenantRdd2 = tenantRdd.filter(contains);
         int tenantCnt = (int) tenantRdd2.count();//存在数据库链接操作
+        
         Row tenantRow = null;
         String tenantName = "";
         
         if(tenantCnt == 1){
+//        	tenantRow = tenantRdd2.take(tenantCnt).get(0);//一个订单对应一个唯一承租人
         	tenantRow = tenantRdd2.take(tenantCnt).get(0);//一个订单对应一个唯一承租人
         	logger.info("tenantRow:"+tenantRow);
         	tenantName = tenantRow.getAs("NAME");
@@ -94,6 +103,7 @@ public class RddServiceImpl implements IRddService,Serializable {
         	resultList.addAll(fieldAntiFraud.mobileAntiFraud(tenantRow, appId, "承租人电话号码1","MOBILE",EPersonType.TENANT,tenantName));
         	
         	resultList.addAll(fieldAntiFraud.mobileAntiFraud(tenantRow, appId, "承租人电话号码2","MOBILE2",EPersonType.TENANT,tenantName));
+        	
         	
         	resultList.addAll(fieldAntiFraud.unitNameAntiFraud(tenantRow, appId, "承租人单位名称", "UNIT_NAME",EPersonType.TENANT,tenantName));
         	
@@ -106,7 +116,6 @@ public class RddServiceImpl implements IRddService,Serializable {
         
         //配偶
         JavaRDD<Row> spouseRdd2 = spouseRdd.filter(contains);
-//        spouseRdd2.persist(StorageLevel.MEMORY_AND_DISK());
         int spouseCnt = (int) spouseRdd2.count();
         logger.info("spouseCnt:"+spouseCnt);
         for (int i = 0; i < spouseCnt; i++) {
