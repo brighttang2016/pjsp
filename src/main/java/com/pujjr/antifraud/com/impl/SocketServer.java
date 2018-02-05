@@ -1,13 +1,7 @@
 package com.pujjr.antifraud.com.impl;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.DataFrameReader;
-import org.apache.spark.sql.SQLContext;
 
-import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -33,7 +27,7 @@ public class SocketServer extends Thread{
 
 	public void run() {
 		EventLoopGroup bossGroup = new NioEventLoopGroup(); 
-		EventLoopGroup workerGroup = new NioEventLoopGroup();
+		EventLoopGroup workerGroup = new NioEventLoopGroup(Integer.parseInt(Utils.getProperty("poolSize")+""));
 		try {
 			ServerBootstrap b = new ServerBootstrap(); 
 			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class) 
