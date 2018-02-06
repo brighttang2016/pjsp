@@ -64,6 +64,7 @@ public class TransactionMapData implements Cloneable{
 			*/
 			conf.set("spark.storage.memoryFraction", "0.5");
 			conf.set("spark.speculation", "true");
+			conf.set("spark.default.parallelism", "10");
 	        JavaSparkContext sc = new JavaSparkContext(conf);
 	        TransactionMapData.tmd.put("sc", sc);
 			return TransactionMapData.tmd;

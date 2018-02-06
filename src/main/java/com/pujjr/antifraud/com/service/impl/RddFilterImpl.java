@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.configuration.tree.UnionCombiner;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -22,8 +21,6 @@ import com.pujjr.antifraud.function.UnCommitApplyFiltFunction;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
-
-import scala.annotation.meta.param;
 
 /**
  * @author tom
@@ -169,7 +166,7 @@ public class RddFilterImpl implements IRddFilter {
 //			List<Row> rowList = filtRdd.take(rowCnt);
 			List<Row> rowList = new ArrayList<Row>();
 			try {
-				rowList = filtRdd.collect();
+//				rowList = filtRdd.collect();
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
@@ -179,6 +176,57 @@ public class RddFilterImpl implements IRddFilter {
 			JavaRDD<Row> blackListContractRdd = (JavaRDD<Row>) tmd.get("blackListContractRdd");
 			JavaRDD<Row> blackListRdd = (JavaRDD<Row>) tmd.get("blackListRdd");
 			
+			
+			/*
+			int rowLength = 200;
+			for (int i = 0; i < rowLength; i++) {
+				Row row = null;
+				try {
+					row = filtRdd.take(i+1).get(0);
+				} catch (Exception e) {
+					row = null;
+				}
+				if(row != null){
+					String oldAppId = row.getAs("APP_ID").toString();
+					if(appId.equals(oldAppId))
+						continue;
+					HisAntiFraudResult result = new HisAntiFraudResult();
+					result.setAppId(appId);
+					result.setName(tenantName);
+					result.setNewFieldName(newFieldName);
+					result.setNewFieldValue(newFieldValue);
+					result.setOldAppId(oldAppId);
+					result.setOldFieldName(oldFieldName);
+					result.setOldFieldValue(row.getAs(newField).toString());
+					//测试，关闭黑名单判断
+					this.isBlack(newField, row.getAs(newField).toString(), result,blackListContractRdd,blackListRdd);
+					resultList.add(result);
+				}else{
+					break;
+				}
+			}
+			*/
+			
+			int rowLength = (int)filtRdd.count();
+			for (int i = 0; i < rowLength; i++) {
+				Row row = filtRdd.take(i+1).get(0);
+				String oldAppId = row.getAs("APP_ID").toString();
+				if(appId.equals(oldAppId))
+					continue;
+				HisAntiFraudResult result = new HisAntiFraudResult();
+				result.setAppId(appId);
+				result.setName(tenantName);
+				result.setNewFieldName(newFieldName);
+				result.setNewFieldValue(newFieldValue);
+				result.setOldAppId(oldAppId);
+				result.setOldFieldName(oldFieldName);
+				result.setOldFieldValue(row.getAs(newField).toString());
+				//测试，关闭黑名单判断
+				this.isBlack(newField, row.getAs(newField).toString(), result,blackListContractRdd,blackListRdd);
+				resultList.add(result);
+			}
+			
+			/*
 			//遍历历史行数据
 			for (Row row : rowList) {
 //				logger.info("filt row:"+row);
@@ -197,6 +245,8 @@ public class RddFilterImpl implements IRddFilter {
 				this.isBlack(newField, row.getAs(newField).toString(), result,blackListContractRdd,blackListRdd);
 				resultList.add(result);
 			}
+			*/
+			
 			
 //		}
 		return resultList;
