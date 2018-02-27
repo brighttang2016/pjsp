@@ -206,25 +206,27 @@ public class RddFilterImpl implements IRddFilter {
 				}
 			}
 			*/
-			
-			int rowLength = (int)filtRdd.count();
-			for (int i = 0; i < rowLength; i++) {
-				Row row = filtRdd.take(i+1).get(0);
-				String oldAppId = row.getAs("APP_ID").toString();
-				if(appId.equals(oldAppId))
-					continue;
-				HisAntiFraudResult result = new HisAntiFraudResult();
-				result.setAppId(appId);
-				result.setName(tenantName);
-				result.setNewFieldName(newFieldName);
-				result.setNewFieldValue(newFieldValue);
-				result.setOldAppId(oldAppId);
-				result.setOldFieldName(oldFieldName);
-				result.setOldFieldValue(row.getAs(newField).toString());
-				//测试，关闭黑名单判断
-				this.isBlack(newField, row.getAs(newField).toString(), result,blackListContractRdd,blackListRdd);
-				resultList.add(result);
+			if(filtRdd != null){
+				int rowLength = (int)filtRdd.count();
+				for (int i = 0; i < rowLength; i++) {
+					Row row = filtRdd.take(i+1).get(0);
+					String oldAppId = row.getAs("APP_ID").toString();
+					if(appId.equals(oldAppId))
+						continue;
+					HisAntiFraudResult result = new HisAntiFraudResult();
+					result.setAppId(appId);
+					result.setName(tenantName);
+					result.setNewFieldName(newFieldName);
+					result.setNewFieldValue(newFieldValue);
+					result.setOldAppId(oldAppId);
+					result.setOldFieldName(oldFieldName);
+					result.setOldFieldValue(row.getAs(newField).toString());
+					//测试，关闭黑名单判断
+					this.isBlack(newField, row.getAs(newField).toString(), result,blackListContractRdd,blackListRdd);
+					resultList.add(result);
+				}
 			}
+			
 			
 			/*
 			//遍历历史行数据
