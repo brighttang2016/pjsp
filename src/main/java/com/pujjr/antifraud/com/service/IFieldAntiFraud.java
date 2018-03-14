@@ -2,7 +2,6 @@ package com.pujjr.antifraud.com.service;
 
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
@@ -16,8 +15,8 @@ public interface IFieldAntiFraud {
 	/**
 	 * 身份证反欺诈
 	 * tom 2017年1月5日
-	 * @param row
-	 * @param appId
+	 * @param row 承租人记录
+	 * @param appId 申请单号
 	 * @param newFieldName 新申请字段名称
 	 * @param personType 人员类别：001：承租人；002：共租人；003：配偶；004：联系人
 	 * @param tenantName 承租人姓名

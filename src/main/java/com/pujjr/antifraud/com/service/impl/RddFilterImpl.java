@@ -61,9 +61,25 @@ public class RddFilterImpl implements IRddFilter {
 		}
 	}
 	
+	public DataFrameReader getReaderTest(){
+		JavaSparkContext sc = (JavaSparkContext) TransactionMapData.getInstance().get("sc");
+//        SQLContext sqlContext = new SQLContext(sc);
+		//20180206 add
+        SQLContext sqlContext = SQLContext.getOrCreate(JavaSparkContext.toSparkContext(sc));
+
+        DataFrameReader reader = sqlContext.read().format("jdbc");
+        reader.option("url",Utils.getProperty("url")+"");//数据库路径
+        reader.option("driver",Utils.getProperty("driver")+"");
+        reader.option("user",Utils.getProperty("username")+"");
+        reader.option("password",Utils.getProperty("password")+"");
+        return reader;
+	}
+	
 	public DataFrameReader getReader(){
 		JavaSparkContext sc = (JavaSparkContext) TransactionMapData.getInstance().get("sc");
-        SQLContext sqlContext = new SQLContext(sc);
+//        SQLContext sqlContext = new SQLContext(sc);
+		//20180206 add
+        SQLContext sqlContext = SQLContext.getOrCreate(JavaSparkContext.toSparkContext(sc));
         DataFrameReader reader = sqlContext.read().format("jdbc");
         reader.option("url",Utils.getProperty("url")+"");//数据库路径
         reader.option("driver",Utils.getProperty("driver")+"");
@@ -116,7 +132,7 @@ public class RddFilterImpl implements IRddFilter {
 		JavaRDD<Row> filtRdd = null;//反欺诈出来的RDD
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		Map<String,Object> paramMap = new HashMap<String,Object>();
-		paramMap.put(newField, newFieldValue);//newField：待匹配字段名 	newFieldnewFieldValue:待匹配值
+		paramMap.put(newField, newFieldValue);//newField：待匹配字段名 	newFieldValue:待匹配值
 		paramMap.put("APP_ID", appId);//过滤条件中加入APP_ID,在过滤的时候，将排除改app_id的记录
 		
 		//过滤未提交订单（未提交订单的所有相关信息，不参与反欺诈计算）
@@ -166,7 +182,7 @@ public class RddFilterImpl implements IRddFilter {
 //			List<Row> rowList = filtRdd.take(rowCnt);
 			List<Row> rowList = new ArrayList<Row>();
 			try {
-//				rowList = filtRdd.collect();
+				rowList = filtRdd.collect();
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
@@ -206,6 +222,7 @@ public class RddFilterImpl implements IRddFilter {
 				}
 			}
 			*/
+			/*
 			if(filtRdd != null){
 				int rowLength = (int)filtRdd.count();
 				for (int i = 0; i < rowLength; i++) {
@@ -226,9 +243,9 @@ public class RddFilterImpl implements IRddFilter {
 					resultList.add(result);
 				}
 			}
+			*/
 			
 			
-			/*
 			//遍历历史行数据
 			for (Row row : rowList) {
 //				logger.info("filt row:"+row);
@@ -247,7 +264,7 @@ public class RddFilterImpl implements IRddFilter {
 				this.isBlack(newField, row.getAs(newField).toString(), result,blackListContractRdd,blackListRdd);
 				resultList.add(result);
 			}
-			*/
+			
 			
 			
 //		}
@@ -399,7 +416,6 @@ public class RddFilterImpl implements IRddFilter {
 		return resultList;
 	}
 
-	@Override
 	public boolean isValidData(String fieldData) {
 		boolean isValid = true;
 		//无效数据规则库

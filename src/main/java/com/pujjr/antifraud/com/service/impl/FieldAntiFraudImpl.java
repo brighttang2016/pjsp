@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
-import org.apache.spark.storage.StorageLevel;
 
 import com.pujjr.antifraud.com.service.IFieldAntiFraud;
 import com.pujjr.antifraud.com.service.IRddFilter;
@@ -49,7 +48,6 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	        resultList.addAll(rddFilter.filt(colesseeRdd, newFieldName, idNo, "ID_NO", "共租人身份证号码", appId, tenantName));
 			break;
 		}
-		
 		return resultList;
 	}
 	

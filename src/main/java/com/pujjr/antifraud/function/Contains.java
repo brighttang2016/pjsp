@@ -39,7 +39,6 @@ public class Contains implements Function<Row, Boolean>{
 				logger.error(e);
 			}
 		}
-//		logger.info("condition:"+condition);
 		return condition;
 	}
 }

@@ -38,12 +38,12 @@ public interface IRddFilter {
 	 * 不包含当前申请单号对应记录（过滤条件使用appId）
 	 * tom 2017年1月7日
 	 * @param javaRdd 待过滤数据集
-	 * @param newFieldName 新申请单字段中文名称
-	 * @param newFieldValue 新申请单字段值
+	 * @param newFieldName 新申请单字段中文名称（待匹配字段名称）
+	 * @param newFieldValue 新申请单字段值（待匹配字段值）
 	 * @param newField 待过滤字段对应数据库列名
 	 * @param oldFieldName 历史记录字段名
 	 * @param appId 申请单号
-	 * @param tenantName 承租人对象
+	 * @param tenantName 承租人姓名
 	 * @return
 	 */
 	public List<HisAntiFraudResult> filt(JavaRDD<Row> javaRdd,String newFieldName,String newFieldValue,String newField,String oldFieldName,String appId,String tenantName);
@@ -56,7 +56,7 @@ public interface IRddFilter {
 	 * @param newField 待过滤字段对应数据库列名
 	 * @param oldFieldName 历史记录字段名
 	 * @param appId 申请单号
-	 * @param tenantName 承租人对象
+	 * @param tenantName 承租人姓名
 	 * @return
 	 */
 	public List<HisAntiFraudResult> filtWithoutAppid(JavaRDD<Row> javaRdd,String newFieldName,String newFieldValue,String newField,String oldFieldName,String appId,String tenantName);

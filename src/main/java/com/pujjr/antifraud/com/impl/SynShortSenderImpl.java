@@ -1,6 +1,5 @@
 package com.pujjr.antifraud.com.impl;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 import org.apache.commons.lang.StringUtils;
@@ -26,7 +25,7 @@ public class SynShortSenderImpl implements ISynShortSender {
         try {
 			byte[] sendByte = sendStr.getBytes(Charset.forName("gbk"));
 			sendStr = StringUtils.leftPad(sendByte.length+"", 5, '0') + sendStr;
-			logger.info("查询完成，返回客户端");
+//			logger.info("查询完成，返回客户端");
 			logger.info("send to client:"+sendStr);
 			send = sendStr.getBytes(Charset.forName("gbk"));
 		} catch (Exception e) {
@@ -39,7 +38,7 @@ public class SynShortSenderImpl implements ISynShortSender {
             public void operationComplete(ChannelFuture future) {
                 assert f == future;
                 ctx.close();
-                System.out.println("服务端已主动断开链接");
+                logger.info("服务端已主动断开链接");
             }
         });
 	}

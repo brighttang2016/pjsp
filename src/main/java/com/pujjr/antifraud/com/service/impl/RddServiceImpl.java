@@ -1,27 +1,25 @@
 package com.pujjr.antifraud.com.service.impl;
 
+import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.SparkSession.Builder;
 import org.apache.spark.storage.StorageLevel;
-import org.codehaus.janino.IClass.IField;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.mysql.jdbc.Connection;
+import com.mysql.jdbc.PreparedStatement;
+import com.mysql.jdbc.ResultSetMetaData;
 import com.pujjr.antifraud.com.service.IFieldAntiFraud;
 import com.pujjr.antifraud.com.service.IRddFilter;
 import com.pujjr.antifraud.com.service.IRddService;
@@ -171,7 +169,7 @@ public class RddServiceImpl implements IRddService,Serializable {
 			resultList.addAll(fieldAntiFraud.plateNoAntiFraud(row, appId, tenantName));
 		}
         
-    	logger.info("执行完成");
+//    	logger.info("执行完成");
 		return JSONObject.toJSONString(resultList);
 		
 	}
@@ -297,30 +295,186 @@ public class RddServiceImpl implements IRddService,Serializable {
 	@Override
 	public String selectBigDataTest(String appId) {
 		logger.info("Rdd服务");
+		long jobStartTotal = System.currentTimeMillis();
+		long jobStart = 0;
+		long jobEnd = 0;
 		JavaSparkContext sc = (JavaSparkContext) TransactionMapData.getInstance().get("sc");
+		
 		Map rddMap1 = sc.getPersistentRDDs();
-		logger.info("缓存rddMap1:"+rddMap1);
-		DataFrameReader reader = new RddFilterImpl().getReader();
-        reader.option("dbtable", "t_big_apply");
+		logger.info("java spark 上下文已缓存RDD(此时无数据):"+rddMap1);
+		
+		DataFrameReader reader = new RddFilterImpl().getReaderTest();
+		reader.option("dbtable", "t_big_apply");
+		jobStart  = System.currentTimeMillis();
         Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
+//      dataSet = dataSet.select("userId","applyId","applyDesc");
+        dataSet = dataSet.select("userId","applyId","applyDesc");
+        jobEnd  = System.currentTimeMillis();
+        logger.info("job---load执行耗时："+(jobEnd - jobStart)+"毫秒");
+        
         JavaRDD<Row> javaRdd = dataSet.javaRDD();
-//        javaRdd.persist(StorageLevel.MEMORY_ONLY());
+        
+        /**
+         * 通过测试：整表缓存会增大action处理时间
+         * 缓存RDD
+         */
+        jobStart  = System.currentTimeMillis();
+        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+        jobEnd = System.currentTimeMillis();
+        logger.info("整表缓存，执行耗时："+(jobEnd - jobStart)+"毫秒");
+        
         Map<String,Object> paramMap = new HashMap<String,Object>();
-        paramMap.put("userId", "9999");
+        paramMap.put("applyId", 4292);
+        paramMap.put("userId", "85214");
         JavaRDD<Row> javaRdd2 = javaRdd.filter(new Contains(paramMap));
+        
+        /**
+        * 缓存RDD2
+        */
+        /*jobStart  = System.currentTimeMillis();
         javaRdd2.persist(StorageLevel.MEMORY_AND_DISK());
-
-//        logger.info("javaRdd2.first():"+javaRdd2.first());
+        jobEnd = System.currentTimeMillis();
+        logger.info("过滤后缓存，执行耗时："+(jobEnd - jobStart)+"毫秒");*/
+        /*
+        jobStart  = System.currentTimeMillis();
+        logger.info("当前线程："+Thread.currentThread().getName());
+        logger.info("执行Action操作,总记录数:"+javaRdd.count());
+        jobEnd = System.currentTimeMillis();
+      */
+        
+        //获取承租人信息表
+        jobStart  = System.currentTimeMillis();
+        reader.option("dbtable", "t_apply_tenant");
+        Dataset<Row> applyTenantSet = reader.load();
+        applyTenantSet = applyTenantSet.select("app_id","id_no","mobile","unit_name");
+//        logger.info("获取承租人数目："+applyTenantSet.count());
+        JavaRDD<Row> applyTenantRdd = applyTenantSet.javaRDD();
+        applyTenantRdd.persist(StorageLevel.MEMORY_AND_DISK());
+        
+    	paramMap.clear();
+        paramMap.put("id_no", "45272519851223081X");
+        JavaRDD<Row> applyTenantFiltRdd = applyTenantRdd.filter(new Contains(paramMap));
+        logger.info("spark-获取承租人数目(通过id_no查询)："+applyTenantFiltRdd.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-获取承租人数目(通过id_no查询)："+(jobEnd - jobStart)+"毫秒");
+        
+        jobStart  = System.currentTimeMillis();
+        paramMap.clear();
+        paramMap.put("app_id", "A401161219034N1");
+        applyTenantFiltRdd = applyTenantRdd.filter(new Contains(paramMap));
+        logger.info("spark-获取承租人数目(通过app_id查询)："+applyTenantFiltRdd.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-获取承租人数目(通过app_id查询)："+(jobEnd - jobStart)+"毫秒");
+        
+        jobStart  = System.currentTimeMillis();
+        paramMap.clear();
+        paramMap.put("mobile", "13454477777");
+        applyTenantFiltRdd = applyTenantRdd.filter(new Contains(paramMap));
+        logger.info("spark-获取承租人数目(通过mobile查询)："+applyTenantFiltRdd.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-获取承租人数目(通过mobile查询)："+(jobEnd - jobStart)+"毫秒");
+        
+        jobStart  = System.currentTimeMillis();
+        paramMap.clear();
+        paramMap.put("unit_name", "中宁县永军粮食经销部");
+        applyTenantFiltRdd = applyTenantRdd.filter(new Contains(paramMap));
+        logger.info("spark-获取承租人数目(通过unit_name查询)："+applyTenantFiltRdd.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-获取承租人数目(通过unit_name查询)："+(jobEnd - jobStart)+"毫秒");
+        
+        applyTenantRdd.unpersist(false);
+        logger.info("spark-总耗时"+(jobEnd - jobStartTotal) + "毫秒");
+        
         Map rddMap2 = sc.getPersistentRDDs();
-//      logger.info("javaRdd2.count():"+javaRdd2.count());
-//      logger.info("javaRdd2.count():"+javaRdd2.count());
-//      logger.info("javaRdd2.count():"+javaRdd2.count());
-//      logger.info("javaRdd2.count():"+javaRdd2.count());
-//      logger.info("javaRdd2.count():"+javaRdd2.count());
-//      logger.info("javaRdd2.count():"+javaRdd2.count());
-        logger.info("缓存rddMap2:"+rddMap2);
+        logger.info("java spark 上下文已缓存RDD(此时有数据):"+rddMap2);
+        
         logger.info("RDD处理结束");
+//      javaRdd2.unpersist(false);
 		return "海量数据表格读取测试";
+	}
+	
+	public String selectBigDataTest2(String appId) {
+		logger.info("Rdd服务");
+		try {
+			Thread.currentThread().sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return "海量数据表格读取测试";
+	}
+	
+	public List doQuery(Connection cnt,String sql){
+		List tableList = new ArrayList<Map<String,Object>>();
+		try {
+			PreparedStatement ps = (PreparedStatement) cnt.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+			int index = 0;
+			while(rs.next()){
+				index ++;
+				ResultSetMetaData metaData = (ResultSetMetaData) rs.getMetaData();
+				int columnCount = metaData.getColumnCount();
+				for (int i = 1; i < columnCount+1; i++) {
+					Map<String,Object> rowMap = new HashMap<String,Object>();
+					rowMap.put(	metaData.getColumnName(i), rs.getObject(i));
+					tableList.add(rowMap);
+				}
+				logger.info("index:"+index);
+//				break;
+			}
+		} catch (Exception e) {
+		}
+		return tableList;
+	}
+	public String selectBigDataTestByJdbc(String appId){
+		long jobStartTotal = System.currentTimeMillis();
+		long jobStart  = System.currentTimeMillis();
+		
+		try {
+			jobStart  = System.currentTimeMillis();
+			String driver = Utils.getProperty("driver").toString();
+			String url = Utils.getProperty("url").toString();
+			String user = Utils.getProperty("username").toString();
+			String password = Utils.getProperty("password").toString();
+			Class.forName(driver);
+			Connection cnt = (Connection) DriverManager.getConnection(url, user, password);
+			
+			String sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where id_no = '45272519851223081X'";
+			List tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询-通过id_no查询："+tableList);
+			long jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询-通过id_no查询耗时："+(jobEnd - jobStart)+"毫秒");
+			
+		    jobStart  = System.currentTimeMillis();
+			sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where app_id = 'A401161219034N1'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询-通过app_id查询："+tableList);
+			jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询-通过app_id查询耗时："+(jobEnd - jobStart)+"毫秒");
+			
+		    jobStart  = System.currentTimeMillis();
+			sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where mobile = '13454477777'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询-通过mobile查询："+tableList);
+			jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询-通过mobile查询耗时："+(jobEnd - jobStart)+"毫秒");
+		    
+		    jobStart  = System.currentTimeMillis();
+			sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where unit_name = '中宁县永军粮食经销部'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询-通过unit_name查询："+tableList);
+			jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询-通过unit_name查询耗时："+(jobEnd - jobStart)+"毫秒");
+			
+		    cnt.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		long jobEnd = System.currentTimeMillis();
+		
+	    logger.info("sql直接查询--总耗时："+(jobEnd - jobStartTotal)+"毫秒");
+	    
+		return "";
 	}
 
 	public String selectCurrBak(String appId) {
@@ -335,13 +489,13 @@ public class RddServiceImpl implements IRddService,Serializable {
         reader.option("password","root");
         
         //t_big_data
-        reader.option("dbtable", "t_big_data");
+        reader.option("dbtable", "t_big_apply");
         Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
         JavaRDD<Row> javaRdd = dataSet.javaRDD();
         javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
         
         Map<String,Object> paramMap = new HashMap<String,Object>();
-        paramMap.put("userId", "8888");
+        paramMap.put("userId", "44924");
         JavaRDD<Row> javaRdd2 = javaRdd.filter(new Contains(paramMap));
         /*JavaRDD<Row> javaRdd2 = javaRdd.filter(new Function<Row, Boolean>() {
 			@Override
@@ -371,19 +525,68 @@ public class RddServiceImpl implements IRddService,Serializable {
     	*/
     	
     	//中间业务逻辑处理完成，返回客户端
-    	System.out.println("ttttttttttttttt");
+//    	System.out.println("ttttttttttttttt");
 //    	this.sendToClient(ctx);
 //    	new Test().doSomething(ctx);
 //    	new Thread(new SendThread(this,ctx)).start();
-    	System.out.println("执行完成");
+//    	System.out.println("执行完成");
 		return null;
 	}
 	@Override
-	public String doService(String tranCode,String appId) {
+	public String doService(final String tranCode,final String appId) {
 		String sendStr = "";
+		/*try {
+			Thread.currentThread().sleep(10000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		
+		/*ThreadPoolExecutor executor = TransactionMapData.initExecutor();
+		Future<String> future = executor.submit(new Callable<String>(){
+			@Override
+			public String call() throws Exception {
+				String sendStrRet = "";
+				Thread.currentThread().sleep(10000);
+				
+				RddServiceImpl rddService = new RddServiceImpl();
+				switch(tranCode){
+				case "00001"://海量数据表测试
+					sendStrRet = rddService.selectBigDataTest(appId);
+//					sendStr = this.selectBigDataTestByJdbc(appId);
+					break;
+				case "10001"://申请单提交后反欺诈查询关系（初审操作）
+					sendStrRet = rddService.firstTrial(appId);
+					break;
+				case "10002"://征信接口返回数据后第3方数据反欺诈查询关系（审核操作）
+					sendStrRet = rddService.creditTrial(appId);
+					break;
+				case "10003"://审核完成后反欺诈查询关系（审批操作）
+					sendStrRet = rddService.checkTrial(appId);
+					break;
+				case "10004"://签约提交后反欺诈（放款复核操作）
+					sendStrRet = rddService.signTrial(appId);
+					break;
+				case "10005"://放款复核后反欺诈查询关系（放款复核初级审批）
+					sendStrRet = rddService.loanReviewTrial(appId);
+					break;
+				}
+				
+				return sendStrRet;
+			}
+		});
+		System.out.println("等待线程返回"+Thread.currentThread().getName());
+		try {
+			sendStr = future.get();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}*/
+		
+		
 		switch(tranCode){
 		case "00001"://海量数据表测试
 			sendStr = this.selectBigDataTest(appId);
+			sendStr = this.selectBigDataTestByJdbc(appId);
 			break;
 		case "10001"://申请单提交后反欺诈查询关系（初审操作）
 			sendStr = this.firstTrial(appId);
