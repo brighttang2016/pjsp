@@ -304,29 +304,31 @@ public class RddServiceImpl implements IRddService,Serializable {
 		logger.info("java spark 上下文已缓存RDD(此时无数据):"+rddMap1);
 		
 		DataFrameReader reader = new RddFilterImpl().getReaderTest();
-		reader.option("dbtable", "t_big_apply");
+
+		/*reader.option("dbtable", "t_big_apply");
 		jobStart  = System.currentTimeMillis();
         Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
 //      dataSet = dataSet.select("userId","applyId","applyDesc");
         dataSet = dataSet.select("userId","applyId","applyDesc");
         jobEnd  = System.currentTimeMillis();
         logger.info("job---load执行耗时："+(jobEnd - jobStart)+"毫秒");
+        JavaRDD<Row> javaRdd = dataSet.javaRDD();*/
         
-        JavaRDD<Row> javaRdd = dataSet.javaRDD();
-        
+		Map<String,Object> paramMap = new HashMap<String,Object>();
+		
         /**
          * 通过测试：整表缓存会增大action处理时间
          * 缓存RDD
          */
-        jobStart  = System.currentTimeMillis();
+       /* jobStart  = System.currentTimeMillis();
         javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
         jobEnd = System.currentTimeMillis();
         logger.info("整表缓存，执行耗时："+(jobEnd - jobStart)+"毫秒");
         
-        Map<String,Object> paramMap = new HashMap<String,Object>();
+        
         paramMap.put("applyId", 4292);
         paramMap.put("userId", "85214");
-        JavaRDD<Row> javaRdd2 = javaRdd.filter(new Contains(paramMap));
+        JavaRDD<Row> javaRdd2 = javaRdd.filter(new Contains(paramMap));*/
         
         /**
         * 缓存RDD2
@@ -345,12 +347,32 @@ public class RddServiceImpl implements IRddService,Serializable {
         //获取承租人信息表
         jobStart  = System.currentTimeMillis();
         reader.option("dbtable", "t_apply_tenant");
-        Dataset<Row> applyTenantSet = reader.load();
-        applyTenantSet = applyTenantSet.select("app_id","id_no","mobile","unit_name");
-//        logger.info("获取承租人数目："+applyTenantSet.count());
+        Dataset<Row> applyTenantSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        jobEnd  = System.currentTimeMillis();
+        logger.info("job---load t_apply_tenant 执行耗时："+(jobEnd - jobStart)+"毫秒");
+        
+        jobStart  = System.currentTimeMillis();
+        reader.option("dbtable", "t_apply_spouse");
+        Dataset<Row> applySpouseSet = reader.load();//第二次加载，不涉及到数据库连接，毫秒级
+        jobEnd  = System.currentTimeMillis();
+        logger.info("job---load t_apply_spouse 执行耗时："+(jobEnd - jobStart)+"毫秒");
+        
+        
+        jobStart  = System.currentTimeMillis();
+        applyTenantSet = applyTenantSet.select("app_id","id_no","mobile","unit_name","addr_ext","unit_tel");
         JavaRDD<Row> applyTenantRdd = applyTenantSet.javaRDD();
         applyTenantRdd.persist(StorageLevel.MEMORY_AND_DISK());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-applyTenantRdd缓存耗时："+(jobEnd - jobStart)+"毫秒");
         
+        jobStart  = System.currentTimeMillis();
+        applySpouseSet = applySpouseSet.select("app_id","id_no","mobile","unit_name","unit_addr_ext","unit_tel");
+        JavaRDD<Row> applySpouseRdd = applySpouseSet.javaRDD();
+        applySpouseRdd.persist(StorageLevel.MEMORY_AND_DISK());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-applySpouseRdd缓存耗时："+(jobEnd - jobStart)+"毫秒");
+        
+        jobStart  = System.currentTimeMillis();
     	paramMap.clear();
         paramMap.put("id_no", "45272519851223081X");
         JavaRDD<Row> applyTenantFiltRdd = applyTenantRdd.filter(new Contains(paramMap));
@@ -382,11 +404,47 @@ public class RddServiceImpl implements IRddService,Serializable {
         jobEnd = System.currentTimeMillis();
         logger.info("spark-获取承租人数目(通过unit_name查询)："+(jobEnd - jobStart)+"毫秒");
         
-        applyTenantRdd.unpersist(false);
-        logger.info("spark-总耗时"+(jobEnd - jobStartTotal) + "毫秒");
+        jobStart  = System.currentTimeMillis();
+        paramMap.clear();
+        paramMap.put("addr_ext", "虹桥新苑15幢608室");
+        applyTenantFiltRdd = applyTenantRdd.filter(new Contains(paramMap));
+        logger.info("spark-获取承租人数目(通过addr_ext查询)："+applyTenantFiltRdd.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-获取承租人数目(通过addr_ext查询)："+(jobEnd - jobStart)+"毫秒");
         
-        Map rddMap2 = sc.getPersistentRDDs();
-        logger.info("java spark 上下文已缓存RDD(此时有数据):"+rddMap2);
+        jobStart  = System.currentTimeMillis();
+        paramMap.clear();
+        paramMap.put("unit_tel", "13629635889");
+        applyTenantFiltRdd = applyTenantRdd.filter(new Contains(paramMap));
+        logger.info("spark-获取承租人数目(通过unit_tel查询)："+applyTenantFiltRdd.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-获取承租人数目(通过unit_tel查询)："+(jobEnd - jobStart)+"毫秒");
+        
+        applyTenantRdd.unpersist(false);
+        
+        //配偶表
+        jobStart  = System.currentTimeMillis();
+        paramMap.clear();
+        paramMap.put("unit_tel", "15293021880");
+        JavaRDD<Row> applySpouseRddFilt = applySpouseRdd.filter(new Contains(paramMap));
+        logger.info("spark-配偶表(通过unit_tel查询)："+applySpouseRddFilt.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-配偶表(通过unit_tel查询)："+(jobEnd - jobStart)+"毫秒");
+        
+        jobStart  = System.currentTimeMillis();
+        paramMap.clear();
+        paramMap.put("unit_name", "云南广电网络集团有限公司");
+        applySpouseRddFilt = applySpouseRdd.filter(new Contains(paramMap));
+        logger.info("spark-配偶表(通过unit_name查询)："+applySpouseRddFilt.collect());
+        jobEnd = System.currentTimeMillis();
+        logger.info("spark-配偶表(通过unit_name查询)："+(jobEnd - jobStart)+"毫秒");
+        
+        jobEnd = System.currentTimeMillis();
+        
+        applySpouseRdd.unpersist(false);
+        logger.info("spark-总耗时"+(jobEnd - jobStartTotal) + "毫秒");
+       
+  
         
         logger.info("RDD处理结束");
 //      javaRdd2.unpersist(false);
@@ -439,32 +497,65 @@ public class RddServiceImpl implements IRddService,Serializable {
 			Class.forName(driver);
 			Connection cnt = (Connection) DriverManager.getConnection(url, user, password);
 			
-			String sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where id_no = '45272519851223081X'";
-			List tableList = new RddServiceImpl().doQuery(cnt, sql);
+			String sql = "";
+			List tableList = null;	
+			long jobEnd = 0;
+			
+			sql = "select app_id,id_no,mobile,unit_name,addr_ext,unit_tel from t_apply_tenant where id_no = '45272519851223081X'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
 			logger.info("sql直接查询-通过id_no查询："+tableList);
-			long jobEnd = System.currentTimeMillis();
+			jobEnd = System.currentTimeMillis();
 		    logger.info("sql直接查询-通过id_no查询耗时："+(jobEnd - jobStart)+"毫秒");
 			
 		    jobStart  = System.currentTimeMillis();
-			sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where app_id = 'A401161219034N1'";
+			sql = "select app_id,id_no,mobile,unit_name,addr_ext,unit_tel from t_apply_tenant where app_id = 'A401161219034N1'";
 			tableList = new RddServiceImpl().doQuery(cnt, sql);
 			logger.info("sql直接查询-通过app_id查询："+tableList);
 			jobEnd = System.currentTimeMillis();
 		    logger.info("sql直接查询-通过app_id查询耗时："+(jobEnd - jobStart)+"毫秒");
 			
 		    jobStart  = System.currentTimeMillis();
-			sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where mobile = '13454477777'";
+			sql = "select app_id,id_no,mobile,unit_name,addr_ext,unit_tel from t_apply_tenant where mobile = '13454477777'";
 			tableList = new RddServiceImpl().doQuery(cnt, sql);
 			logger.info("sql直接查询-通过mobile查询："+tableList);
 			jobEnd = System.currentTimeMillis();
 		    logger.info("sql直接查询-通过mobile查询耗时："+(jobEnd - jobStart)+"毫秒");
 		    
 		    jobStart  = System.currentTimeMillis();
-			sql = "select app_id,id_no,mobile,unit_name from t_apply_tenant where unit_name = '中宁县永军粮食经销部'";
+			sql = "select app_id,id_no,mobile,unit_name,addr_ext,unit_tel from t_apply_tenant where unit_name = '中宁县永军粮食经销部'";
 			tableList = new RddServiceImpl().doQuery(cnt, sql);
 			logger.info("sql直接查询-通过unit_name查询："+tableList);
 			jobEnd = System.currentTimeMillis();
 		    logger.info("sql直接查询-通过unit_name查询耗时："+(jobEnd - jobStart)+"毫秒");
+		    
+		    jobStart  = System.currentTimeMillis();
+			sql = "select app_id,id_no,mobile,unit_name,addr_ext,unit_tel from t_apply_tenant where addr_ext = '虹桥新苑15幢608室'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询-通过addr_ext查询："+tableList);
+			jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询-通过addr_ext查询耗时："+(jobEnd - jobStart)+"毫秒");
+		    
+		    jobStart  = System.currentTimeMillis();
+			sql = "select app_id,id_no,mobile,unit_name,addr_ext,unit_tel from t_apply_tenant where unit_tel = '13629635889'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询-通过unit_tel查询："+tableList);
+			jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询-通过unit_tel查询耗时："+(jobEnd - jobStart)+"毫秒");
+		    
+		    //配偶表
+		    jobStart  = System.currentTimeMillis();
+			sql = "select app_id,id_no,mobile,unit_name,unit_addr_ext,unit_tel from t_apply_spouse where unit_tel = '15293021880'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询,配偶表-通过unit_tel查询："+tableList);
+			jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询,配偶表-通过unit_tel查询耗时："+(jobEnd - jobStart)+"毫秒");
+		    
+		    jobStart  = System.currentTimeMillis();
+			sql = "select app_id,id_no,mobile,unit_name,unit_addr_ext,unit_tel from t_apply_spouse where unit_name = '云南广电网络集团有限公司'";
+			tableList = new RddServiceImpl().doQuery(cnt, sql);
+			logger.info("sql直接查询,配偶表-通过unit_name查询："+tableList);
+			jobEnd = System.currentTimeMillis();
+		    logger.info("sql直接查询,配偶表-通过unit_name查询耗时："+(jobEnd - jobStart)+"毫秒");
 			
 		    cnt.close();
 		} catch (Exception e) {
