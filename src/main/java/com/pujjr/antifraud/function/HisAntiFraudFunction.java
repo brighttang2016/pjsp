@@ -30,7 +30,7 @@ public class HisAntiFraudFunction implements Function<Row, Boolean>{
 //			logger.info("row.getAs(key):"+row.getAs(key));
 			try {
 				if(index == 0){
-					if("APP_ID".equals(key)){//条件中存在APP_ID,最终筛选出不为此APP_ID的其他所有记录
+					if("app_id".equals(key)){//条件中存在APP_ID,最终筛选出不为此APP_ID的其他所有记录
 						condition = !this.paramMap.get(key).equals(row.getAs(key));
 					}else{
 						if(row.getAs(key) != null){
@@ -46,7 +46,7 @@ public class HisAntiFraudFunction implements Function<Row, Boolean>{
 						}
 					}
 				}else{
-					if("APP_ID".equals(key)){//条件中存在APP_ID,最终筛选出不为此APP_ID的其他所有记录
+					if("app_id".equals(key)){//条件中存在APP_ID,最终筛选出不为此APP_ID的其他所有记录
 						condition = condition && !this.paramMap.get(key).equals(row.getAs(key));
 					}else{
 						if(row.getAs(key) != null){

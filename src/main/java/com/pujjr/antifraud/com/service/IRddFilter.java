@@ -3,6 +3,7 @@ package com.pujjr.antifraud.com.service;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Row;
 
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
@@ -34,6 +35,7 @@ public interface IRddFilter {
 	 * @return
 	 */
 	public JavaRDD<Row> getTableRdd(String tableName);
+	
 	/**
 	 * 不包含当前申请单号对应记录（过滤条件使用appId）
 	 * tom 2017年1月7日
@@ -68,4 +70,32 @@ public interface IRddFilter {
 	 * @return
 	 */
 	public boolean isValidData(String fieldData);
+	
+	/**
+	 * 
+	 * @author tom
+	 * @time 2018年3月15日 下午3:36:50
+	 * @param tableName 表名(示例：t_apply_tenant)
+	 * @param cols 列名(用法示例：app_id|id_no|mobile|unit_name|addr_ext|unit_tel)
+	 * @return
+	 */
+	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName,String cols);
+	
+	/**
+	 * 装配resultList
+	 * @author tom
+	 * @time 2018年3月15日 下午7:30:16
+	 * @param resultList 反欺诈结果
+	 * @param rowList 待匹配记录
+	 * @param appId 当前申请单号
+	 * @param name 承租人姓名
+	 * @param newFieldCName 新字段中文名
+	 * @param newFieldValue 新字段值
+	 * @param oldFieldCName 原始字段中文名。示例：身份证号
+	 * @param oldFieldTag 原始字段属性标识。示例：id_no
+	 */
+	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String name,
+		String newFieldCName,String newFieldValue,
+		String oldFieldCName,String oldFieldTag);
+	
 }

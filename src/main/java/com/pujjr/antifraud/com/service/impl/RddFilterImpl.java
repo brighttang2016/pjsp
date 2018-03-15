@@ -430,4 +430,53 @@ public class RddFilterImpl implements IRddFilter {
 		}
 		return isValid;
 	}
+
+	@Override
+	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName, String cols) {
+		long jobStartTime = 0;
+		long jobEndTime = 0;
+		/**
+		 * load
+		 */
+        jobStartTime  = System.currentTimeMillis();
+        reader.option("dbtable", tableName);
+        Dataset<Row> dateSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        jobEndTime  = System.currentTimeMillis();
+        logger.info("表名【"+tableName+"】load,执行耗时："+(jobEndTime - jobStartTime)+"毫秒");
+        
+        /**
+         * persist
+         */
+        jobStartTime  = System.currentTimeMillis();
+        if(!"".equals(cols) && cols != null)
+        	dateSet = dateSet.select(Utils.getColumnArray(cols));
+	    JavaRDD<Row> tableRdd = dateSet.javaRDD();
+	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    jobEndTime = System.currentTimeMillis();
+	    logger.info("表名【"+tableName+"】persist,执行耗时："+(jobEndTime - jobStartTime)+"毫秒");
+	    
+	    tmd.put(Utils.tableNameToRddName(tableName), tableRdd);
+		return tableRdd;
+	}
+	
+	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String name,
+		String newFieldCName,String newFieldValue,
+		String oldFieldCName,String oldFieldTag){
+		//遍历历史行数据
+		for (Row row : rowList) {
+			String oldAppId = row.getAs("app_id").toString();
+			//当前申请单不与同appId记录匹配
+			if(appId.equals(oldAppId))
+				continue;
+			HisAntiFraudResult result = new HisAntiFraudResult();
+			result.setAppId(appId);
+			result.setName(name);
+			result.setNewFieldName(newFieldCName);
+			result.setNewFieldValue(newFieldValue);
+			result.setOldAppId(oldAppId);
+			result.setOldFieldName(oldFieldCName);
+			result.setOldFieldValue(row.getAs(oldFieldTag).toString());
+			resultList.add(result);
+		}
+	}
 }

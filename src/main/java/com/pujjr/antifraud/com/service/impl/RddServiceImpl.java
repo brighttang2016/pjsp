@@ -4,8 +4,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
@@ -39,7 +42,7 @@ import scala.Serializable;
 public class RddServiceImpl implements IRddService,Serializable {
 	private static String name = null;
 	private static final Logger logger = Logger.getLogger(RddServiceImpl.class);
-	TransactionMapData tmd = TransactionMapData.getInstance();
+	private TransactionMapData tmd = TransactionMapData.getInstance();
 	@Override
 	public String selectHis(String appId) {
 		return null;
@@ -626,58 +629,11 @@ public class RddServiceImpl implements IRddService,Serializable {
 	@Override
 	public String doService(final String tranCode,final String appId) {
 		String sendStr = "";
-		/*try {
-			Thread.currentThread().sleep(10000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		
-		/*ThreadPoolExecutor executor = TransactionMapData.initExecutor();
-		Future<String> future = executor.submit(new Callable<String>(){
-			@Override
-			public String call() throws Exception {
-				String sendStrRet = "";
-				Thread.currentThread().sleep(10000);
-				
-				RddServiceImpl rddService = new RddServiceImpl();
-				switch(tranCode){
-				case "00001"://海量数据表测试
-					sendStrRet = rddService.selectBigDataTest(appId);
-//					sendStr = this.selectBigDataTestByJdbc(appId);
-					break;
-				case "10001"://申请单提交后反欺诈查询关系（初审操作）
-					sendStrRet = rddService.firstTrial(appId);
-					break;
-				case "10002"://征信接口返回数据后第3方数据反欺诈查询关系（审核操作）
-					sendStrRet = rddService.creditTrial(appId);
-					break;
-				case "10003"://审核完成后反欺诈查询关系（审批操作）
-					sendStrRet = rddService.checkTrial(appId);
-					break;
-				case "10004"://签约提交后反欺诈（放款复核操作）
-					sendStrRet = rddService.signTrial(appId);
-					break;
-				case "10005"://放款复核后反欺诈查询关系（放款复核初级审批）
-					sendStrRet = rddService.loanReviewTrial(appId);
-					break;
-				}
-				
-				return sendStrRet;
-			}
-		});
-		System.out.println("等待线程返回"+Thread.currentThread().getName());
-		try {
-			sendStr = future.get();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
-		
-		
 		switch(tranCode){
 		case "00001"://海量数据表测试
 			sendStr = this.selectBigDataTest(appId);
-			sendStr = this.selectBigDataTestByJdbc(appId);
+			sendStr = this.selectBigDataTest(appId);
+//			sendStr = this.selectBigDataTestByJdbc(appId);
 			break;
 		case "10001"://申请单提交后反欺诈查询关系（初审操作）
 			sendStr = this.firstTrial(appId);
@@ -697,5 +653,74 @@ public class RddServiceImpl implements IRddService,Serializable {
 		}
 		return sendStr;
 	}
-
+	
+	@Override
+	public void initRDD() {
+		long jobStart  = System.currentTimeMillis();
+		RddFilterImpl rddFilterImpl = new RddFilterImpl();
+		DataFrameReader reader = rddFilterImpl.getReader();
+        rddFilterImpl.getTableRdd(reader, "t_apply_tenant", "app_id|name|id_no|mobile|mobile2|unit_name|unit_tel");
+        rddFilterImpl.getTableRdd(reader, "t_apply_spouse", "app_id|id_no|mobile|unit_name|unit_addr_ext|unit_tel");
+        rddFilterImpl.getTableRdd(reader, "t_apply_colessee", "app_id|id_no|mobile|unit_name|unit_tel");
+        rddFilterImpl.getTableRdd(reader, "t_apply_linkman", "app_id|mobile");
+        rddFilterImpl.getTableRdd(reader, "t_apply_finance", "app_id|car_vin|car_engine_no");
+        rddFilterImpl.getTableRdd(reader, "t_sign_finance_detail", "app_id|plate_no");
+        rddFilterImpl.getTableRdd(reader, "t_blacklist_ref_contract", "mobile");
+        rddFilterImpl.getTableRdd(reader, "t_blacklist", "id_no");
+        long jobEnd = System.currentTimeMillis();
+        logger.info("所有RDD初始化(initRDD方法),执行耗时："+(jobEnd - jobStart)+"毫秒");
+	}
+	
+	@Override
+	public void clearRdd() {
+		Iterator<String> keyIt = tmd.map.keySet().iterator();
+		while(keyIt.hasNext()){
+			String keyName = keyIt.next();
+			Pattern pattern = Pattern.compile("Rdd");
+			Matcher matcher = pattern.matcher(keyName);
+			if(matcher.find()){
+				JavaRDD<Row> tableRdd = (JavaRDD<Row>) tmd.get(keyName);
+				tableRdd.unpersist(false);
+			}
+		}
+	}
+	
+	@Override
+	public String doService(JSONObject recJson) {
+		long jobStart  = System.currentTimeMillis();;
+		long jobEnd = 0;
+		String sendStr = "";
+		final String tranCode = recJson.getString("tranCode");;
+		final String appId = recJson.getString("appId");
+		this.initRDD();
+		switch(tranCode){
+		case "00001"://海量数据表测试
+			sendStr = this.selectBigDataTest(appId);
+//			sendStr = this.selectBigDataTestByJdbc(appId);
+			break;
+		case "10001"://申请单提交后反欺诈查询关系（初审操作）
+			sendStr = this.firstTrial(appId);
+			break;
+		case "10002"://征信接口返回数据后第3方数据反欺诈查询关系（审核操作）
+			sendStr = this.creditTrial(appId);
+			break;
+		case "10003"://审核完成后反欺诈查询关系（审批操作）
+			sendStr = this.checkTrial(appId);
+			break;
+		case "10004"://签约提交后反欺诈（放款复核操作）
+			sendStr = this.signTrial(appId);
+			break;
+		case "10005"://放款复核后反欺诈查询关系（放款复核初级审批）
+			sendStr = this.loanReviewTrial(appId);
+			break;
+		case "10006":
+			sendStr = new PreScreeningImpl().doPreScreening(appId,recJson.getString("name"), recJson.getString("idNo"), recJson.getString("mobile")); 
+		}
+		jobEnd = System.currentTimeMillis();
+		this.clearRdd();
+        logger.info("业务逻辑执行(doService方法),执行耗时："+(jobEnd - jobStart)+"毫秒");
+		return sendStr;
+	}
+	
+	
 }

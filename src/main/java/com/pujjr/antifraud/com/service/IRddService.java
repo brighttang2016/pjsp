@@ -1,5 +1,7 @@
 package com.pujjr.antifraud.com.service;
 
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * @author tom
  * 
@@ -57,5 +59,28 @@ public interface IRddService{
 	public String selectBigDataTest(String appId);
 	
 	public String selectHis(String appId);
+	
+	/**
+	 * 查询服务路由：接收报文后执行服务
+	 * @author tom
+	 * @time 2018年3月15日 下午2:23:28
+	 * @param recJson 客户端上送报文
+	 * @return
+	 */
+	public String doService(JSONObject recJson);
+	
+	/**
+	 * 初始化RDD
+	 * @author tom
+	 * @time 2018年3月15日 下午5:32:29
+	 */
+	public void initRDD();
+	
+	/**
+	 * 清空Rdd
+	 * @author tom
+	 * @time 2018年3月15日 下午6:30:48
+	 */
+	public void clearRdd();
 	
 }

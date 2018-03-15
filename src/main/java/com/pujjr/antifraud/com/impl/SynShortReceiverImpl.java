@@ -24,17 +24,15 @@ public class SynShortReceiverImpl implements ISynShortReceiver{
 		JSONObject recJson = new JSONObject();
 		try {
 			recJson = JSONObject.parseObject(recStr);
-			tranCode = recJson.getString("tranCode");
+//			tranCode = recJson.getString("tranCode");
 			logger.info("tranCode："+tranCode);
 		} catch (Exception e) {
 			logger.error("客户端报文异常，报文recStr："+recStr);
 		}
 		IRddService rddServiceImp = new RddServiceImpl();
-		String appId = recJson.getString("appId");
+//		String appId = recJson.getString("appId");
 		long timeBegin = System.currentTimeMillis();
-		
-		sendStr = rddServiceImp.doService(tranCode, appId);
-		
+		sendStr = rddServiceImp.doService(recJson);
 //		返回空数组(反空测试打开)
 //		sendStr = "[]";
 		long timeEnd = System.currentTimeMillis();
