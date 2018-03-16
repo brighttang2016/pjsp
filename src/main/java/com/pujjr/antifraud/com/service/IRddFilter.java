@@ -74,7 +74,8 @@ public interface IRddFilter {
 	/**
 	 * 
 	 * @author tom
-	 * @time 2018年3月15日 下午3:36:50
+	 * @time 2018年3月16日 下午3:11:16
+	 * @param reader 
 	 * @param tableName 表名(示例：t_apply_tenant)
 	 * @param cols 列名(用法示例：app_id|id_no|mobile|unit_name|addr_ext|unit_tel)
 	 * @return
@@ -82,20 +83,42 @@ public interface IRddFilter {
 	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName,String cols);
 	
 	/**
-	 * 装配resultList
+	 * 装配反欺诈结果
 	 * @author tom
 	 * @time 2018年3月15日 下午7:30:16
 	 * @param resultList 反欺诈结果
-	 * @param rowList 待匹配记录
+	 * @param rowList 反欺诈匹配记录
 	 * @param appId 当前申请单号
 	 * @param name 承租人姓名
 	 * @param newFieldCName 新字段中文名
 	 * @param newFieldValue 新字段值
 	 * @param oldFieldCName 原始字段中文名。示例：身份证号
-	 * @param oldFieldTag 原始字段属性标识。示例：id_no
+	 * @param oldFieldKey 原始字段属性标识。示例：id_no
 	 */
-	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String name,
+	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String tenantName,
 		String newFieldCName,String newFieldValue,
-		String oldFieldCName,String oldFieldTag);
+		String oldFieldCName,String oldFieldKey);
+	
+	/**
+	 * 获取已提交申请单
+	 * @author tom
+	 * @time 2018年3月16日 下午3:10:51
+	 * @param reader
+	 * @param tableName
+	 * @param cols
+	 * @return
+	 */
+	public JavaRDD<Row> getCommitApply(DataFrameReader reader,String tableName, String cols);
+	
+	/**
+	 * 获取未提交申请单
+	 * @author tom
+	 * @time 2018年3月16日 下午3:10:51
+	 * @param reader
+	 * @param tableName
+	 * @param cols
+	 * @return
+	 */
+	public JavaRDD<Row> getUnCommitApply(DataFrameReader reader, String tableName, String cols);
 	
 }

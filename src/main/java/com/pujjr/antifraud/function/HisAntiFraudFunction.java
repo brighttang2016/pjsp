@@ -64,7 +64,11 @@ public class HisAntiFraudFunction implements Function<Row, Boolean>{
 				}
 				index++;
 			} catch (Exception e) {
+				logger.error("历史反欺诈异常，异常记录：");
+				logger.error(row);
+				logger.error("异常key："+key);
 				logger.error(e);
+				
 			}
 		}
 		return condition;

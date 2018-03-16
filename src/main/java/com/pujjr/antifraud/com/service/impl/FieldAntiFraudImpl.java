@@ -1,13 +1,17 @@
 package com.pujjr.antifraud.com.service.impl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 
 import com.pujjr.antifraud.com.service.IFieldAntiFraud;
 import com.pujjr.antifraud.com.service.IRddFilter;
+import com.pujjr.antifraud.function.HisAntiFraudFunction;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
 import com.pujju.antifraud.enumeration.EPersonType;
@@ -18,6 +22,7 @@ import com.pujju.antifraud.enumeration.EPersonType;
  *
  */
 public class FieldAntiFraudImpl implements IFieldAntiFraud {
+	private static final Logger logger = Logger.getLogger(FieldAntiFraudImpl.class);
 	@Override
 	public List<HisAntiFraudResult> idNoAntiFraud(Row row,String appId,String newFieldName,EPersonType personType,String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
@@ -252,5 +257,30 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 //		String newFieldValue = row.getAs("GPS_WIRELESS_NO").toString();
 		resultList.addAll(rddFilter.filtInvoceAreaId(row, appId, tenantName));
 		return resultList;
+	}
+
+	@Override
+	public List<HisAntiFraudResult> fieldAntifraud(String serviceName,List<HisAntiFraudResult> resultList,JavaRDD<Row> tableRdd,
+			String appId,String tenantName,
+			String newFieldCName,String newFieldValue,
+			String oldFieldCName,String oldFieldKey
+			) {
+		long jobStart = 0;
+		long jobEnd = 0;
+		IRddFilter rddFilterImpl = new RddFilterImpl();
+		/**
+		 * 查询条件
+		 */
+		Map<String,Object> paramMap = new HashMap<String,Object>();
+		paramMap.clear();
+		paramMap.put("app_id", appId);
+        paramMap.put(oldFieldKey, newFieldValue);
+        jobStart  = System.currentTimeMillis();
+        List<Row> rowList = tableRdd.filter(new HisAntiFraudFunction(paramMap)).collect();
+        logger.info(serviceName+newFieldCName+"<--->"+oldFieldCName+"，查询结果："+rowList);
+		rddFilterImpl.assembleResultList(resultList, rowList, appId, tenantName, newFieldCName, newFieldValue, oldFieldCName, oldFieldKey);
+        jobEnd = System.currentTimeMillis();
+        logger.info(serviceName+newFieldCName+"<--->"+oldFieldCName+"，耗时："+(jobEnd - jobStart)+"毫秒");
+		return null;
 	}
 } 

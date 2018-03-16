@@ -1,11 +1,9 @@
 package com.pujjr.antifraud.function;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 
@@ -27,7 +25,6 @@ public class UnCommitApplyFiltFunction implements Function<Row, Boolean>{
 			String key = keyIt.next();
 			Object value = this.paramMap.get(key);
 			if("STATUS".equals(key)){//找出未提交订单
-				
 				if(value.equals(row.getAs(key))){
 					condition = true;
 				}else{

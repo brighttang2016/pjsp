@@ -2,10 +2,15 @@ package com.pujjr.antifraud.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
 import org.apache.spark.sql.Column;
+
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 
 /**
  * @author tom
@@ -13,6 +18,17 @@ import org.apache.spark.sql.Column;
  */
 public class Utils {
 	private static final Logger logger = Logger.getLogger(Utils.class);
+	
+	/**
+	 * list转seq
+	 * @author tom
+	 * @time 2018年3月16日 下午4:57:22
+	 * @param list
+	 * @return
+	 */
+	public static Seq<String> convertList2Seq(List<String> list){
+		return JavaConversions.asScalaBuffer(list).seq();
+	}
 	
 	/**
 	 * 表名转Rdd名
@@ -37,6 +53,24 @@ public class Utils {
         if("Rdd".equals(sb.toString()))
         	throw new RuntimeException("异常：表名转Rdd名错误!");
         return sb.toString();
+	}
+	
+	/**
+	 * 列名字符串转列Column List
+	 * @author tom
+	 * @time 2018年3月15日 下午3:34:04
+	 * @param colStr 列名字符串，竖线分隔(用法示例：app_id|id_no|mobile|unit_name|addr_ext|unit_tel)
+	 * @return 列名队列
+	 */
+	public static List<String> getColumnList(String colStr){
+		List columnList = new ArrayList();
+		String[] colNameArray = colStr.split("\\|");
+		Column[] columnArray = new Column[colNameArray.length];
+        for (int i = 0; i < colNameArray.length; i++) {
+        	String colName = colNameArray[i];
+        	columnList.add(colName);
+		}
+        return columnList;
 	}
 	
 	/**

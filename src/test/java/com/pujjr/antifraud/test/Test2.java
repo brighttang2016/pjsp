@@ -1,9 +1,14 @@
 package com.pujjr.antifraud.test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.spark.sql.Column;
+
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 
 public class Test2 {
 
@@ -45,5 +50,28 @@ public class Test2 {
         Pattern pattern = Pattern.compile("Rdd");
 		Matcher matcher = pattern.matcher("applyTenantrRDD");
 		System.out.println(matcher.find());
+		
+		//acala seq ----> list 下面是使用方法
+		/*scala.collection.immutable.Seq<String> seq = null;
+		List<String> list = convert(seq.toSeq());
+		System.out.println(list);*/
+		
+		//list转seq
+		List<String> a = new ArrayList<String>();
+	    a.add("john1");
+	    a.add("mary2");
+	    a.add("mary3");
+	    a.add("mary4");
+	    a.add("mary5");
+	    a.add("mary6");
+	    Seq<String> seq2 = JavaConversions.asScalaBuffer(a).seq();
+	    System.out.println(seq2);
 	}
+	
+	// 自定义转换器
+	public static List<String>     convert(scala.collection.immutable.Seq<String> seq) {
+	        return     scala.collection.JavaConversions.seqAsJavaList(seq);
+	}
+
+	
 }

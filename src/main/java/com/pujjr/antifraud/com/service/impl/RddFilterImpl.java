@@ -18,6 +18,7 @@ import com.pujjr.antifraud.com.service.IRddFilter;
 import com.pujjr.antifraud.function.Contains;
 import com.pujjr.antifraud.function.HisAntiFraudFunction;
 import com.pujjr.antifraud.function.UnCommitApplyFiltFunction;
+import com.pujjr.antifraud.function.UnCommitApplyFiltFunctionPlus;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
@@ -59,6 +60,47 @@ public class RddFilterImpl implements IRddFilter {
 		}else{
 			result.setIsBlack(false);
 		}
+	}
+	
+	/**
+	 * 判断当前反欺诈记录是否存在于黑名单
+	 * @author tom
+	 * @time 2018年3月16日 上午11:12:28
+	 * @param oldFieldKey 原始字段键
+	 * @param oldFieldValue 原始字段值
+	 * @param result 当前反欺诈结果记录
+	 */
+	public void isBlack(String oldFieldKey,String oldFieldValue,HisAntiFraudResult result){
+		long jobStart  = System.currentTimeMillis();
+		//黑名单数据集
+		JavaRDD<Row> blacklistRefContractRdd = (JavaRDD<Row>) tmd.get("blacklistRefContractRdd");
+		JavaRDD<Row> blacklistRdd = (JavaRDD<Row>) tmd.get("blacklistRdd");
+		
+		//判断当前历史行数据是否为黑名单
+		Map<String,Object> tempParamMap = new HashMap<String,Object>();
+		if("mobile2".equals(oldFieldKey) || "unit_tel".equals(oldFieldKey)){//反欺诈过程中，承租人电话号码2、单位电话均与表t_blacklist_ref_contract中的MOBILE字段相对应。
+			//电话号码黑名单匹配
+			tempParamMap.put("mobile", oldFieldValue);
+			Contains contains = new Contains(tempParamMap);
+			JavaRDD<Row> blackRdd = blacklistRefContractRdd.filter(contains);//t_blacklist表过滤后数据集
+			if(blackRdd.count() > 0){
+				result.setIsBlack(true);
+			}else{
+				result.setIsBlack(false);
+			}
+		}else if("id_no".equals(oldFieldKey)){
+			//身份证黑名单
+			tempParamMap.put(oldFieldKey, oldFieldValue);
+			Contains contains = new Contains(tempParamMap);
+			JavaRDD<Row> blackRefRdd = blacklistRdd.filter(contains);//t_blacklist_ref_contract表过滤后数据集
+			if(blackRefRdd.count() > 0){
+				result.setIsBlack(true);
+			}else{
+				result.setIsBlack(false);
+			}
+		}
+		long jobEnd = System.currentTimeMillis();
+        logger.info("黑名单校验,【oldFieldKey："+oldFieldKey+",oldFieldValue："+oldFieldValue+"】,校验结果："+result.getIsBlack()+",耗时："+(jobEnd - jobStart)+"毫秒");
 	}
 	
 	public DataFrameReader getReaderTest(){
@@ -435,33 +477,57 @@ public class RddFilterImpl implements IRddFilter {
 	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName, String cols) {
 		long jobStartTime = 0;
 		long jobEndTime = 0;
+		JavaRDD<Row> tableRdd = null;
 		/**
 		 * load
 		 */
         jobStartTime  = System.currentTimeMillis();
         reader.option("dbtable", tableName);
-        Dataset<Row> dateSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        Dataset<Row> dataSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
         jobEndTime  = System.currentTimeMillis();
-        logger.info("表名【"+tableName+"】load,执行耗时："+(jobEndTime - jobStartTime)+"毫秒");
-        
+        logger.info("table【"+tableName+"】load,耗时："+(jobEndTime - jobStartTime)+"毫秒");
         /**
          * persist
          */
         jobStartTime  = System.currentTimeMillis();
-        if(!"".equals(cols) && cols != null)
-        	dateSet = dateSet.select(Utils.getColumnArray(cols));
-	    JavaRDD<Row> tableRdd = dateSet.javaRDD();
+        if(!"".equals(cols) && cols != null){
+        	dataSet = dataSet.select(Utils.getColumnArray(cols));
+        }
+        
+	    /**
+	     * 方式1:采用join过滤未提交记录
+	     */
+	    /*if(Utils.getColumnList(cols).contains("app_id")){
+	    	//已提交申请单
+		    Dataset<Row> commitApplyDataset = (Dataset<Row>) tmd.get("commitApplyDataset");
+	    	List<String> joinColumn = new ArrayList<String>();
+	 	    joinColumn.add("app_id");
+	 	    dataSet = dataSet.join(commitApplyDataset,JavaConversions.asScalaBuffer(joinColumn).toSeq(),"inner");
+	    }*/
+	    tableRdd = dataSet.javaRDD();
+	    /**
+	     * 方式2：采用function过滤未提交记录
+	     */
+	    
+	    if(Utils.getColumnList(cols).contains("app_id")){
+	    	List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
+		    tableRdd = tableRdd.filter(new UnCommitApplyFiltFunctionPlus(unCommitAppIdList));
+	    }
+	    /**
+	     * 备注：方式1耗时太长
+	     */
 	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
 	    jobEndTime = System.currentTimeMillis();
-	    logger.info("表名【"+tableName+"】persist,执行耗时："+(jobEndTime - jobStartTime)+"毫秒");
-	    
+
 	    tmd.put(Utils.tableNameToRddName(tableName), tableRdd);
+	    logger.info("table【"+tableName+"】persist,耗时："+(jobEndTime - jobStartTime)+"毫秒");
 		return tableRdd;
 	}
 	
-	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String name,
+	@Override
+	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String tenantName,
 		String newFieldCName,String newFieldValue,
-		String oldFieldCName,String oldFieldTag){
+		String oldFieldCName,String oldFieldKey){
 		//遍历历史行数据
 		for (Row row : rowList) {
 			String oldAppId = row.getAs("app_id").toString();
@@ -470,13 +536,78 @@ public class RddFilterImpl implements IRddFilter {
 				continue;
 			HisAntiFraudResult result = new HisAntiFraudResult();
 			result.setAppId(appId);
-			result.setName(name);
+			result.setName(tenantName);
 			result.setNewFieldName(newFieldCName);
 			result.setNewFieldValue(newFieldValue);
 			result.setOldAppId(oldAppId);
 			result.setOldFieldName(oldFieldCName);
-			result.setOldFieldValue(row.getAs(oldFieldTag).toString());
+			result.setOldFieldValue(row.getAs(oldFieldKey).toString());
+			this.isBlack(oldFieldKey, row.getAs(oldFieldKey).toString(), result);
 			resultList.add(result);
 		}
 	}
+
+	@Override
+	public JavaRDD<Row> getCommitApply(DataFrameReader reader, String tableName, String cols) {
+		long jobStartTime = 0;
+		long jobEndTime = 0;
+		/**
+		 * load
+		 */
+        jobStartTime  = System.currentTimeMillis();
+        reader.option("dbtable", tableName);
+        Dataset<Row> dateSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        jobEndTime  = System.currentTimeMillis();
+        logger.info("table【"+tableName+"】load,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+        
+        /**
+         * persist
+         */
+        jobStartTime  = System.currentTimeMillis();
+        if(!"".equals(cols) && cols != null)
+        	dateSet = dateSet.select(Utils.getColumnArray(cols)).where("status != 'sqdzt01'");
+	    JavaRDD<Row> tableRdd = dateSet.javaRDD();
+	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    jobEndTime = System.currentTimeMillis();
+//	    logger.info("table【"+tableName+"】未提交申请单总数："+tableRdd.collect());
+	    logger.info("table【"+tableName+"】persist,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+	    tmd.put("commitApplyRdd", tableRdd);
+	    tmd.put("commitApplyDataset", dateSet);
+		return tableRdd;
+	}
+	
+	@Override
+	public JavaRDD<Row> getUnCommitApply(DataFrameReader reader, String tableName, String cols) {
+		long jobStartTime = 0;
+		long jobEndTime = 0;
+		/**
+		 * load
+		 */
+        jobStartTime  = System.currentTimeMillis();
+        reader.option("dbtable", tableName);
+        Dataset<Row> dateSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        jobEndTime  = System.currentTimeMillis();
+        logger.info("table【"+tableName+"】load,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+        
+        /**
+         * persist
+         */
+        jobStartTime  = System.currentTimeMillis();
+        if(!"".equals(cols) && cols != null)
+        	dateSet = dateSet.select(Utils.getColumnArray(cols)).where("status == 'sqdzt01'");
+	    JavaRDD<Row> tableRdd = dateSet.javaRDD();
+	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    
+	    List<Row> unCommitApply = tableRdd.collect();
+	    List<String> unCommitAppIdList = new ArrayList<String>();
+	    for (Row row : unCommitApply) {
+	    	unCommitAppIdList.add(row.getAs("app_id").toString());
+		}
+	    tmd.put("unCommitAppIdList", unCommitAppIdList);
+	    jobEndTime = System.currentTimeMillis();
+	    logger.info("table【"+tableName+"】persist,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+	    tmd.put("unCommitApplyRdd", tableRdd);
+		return tableRdd;
+	}
+
 }

@@ -36,7 +36,8 @@ public class SynShortReceiverImpl implements ISynShortReceiver{
 //		返回空数组(反空测试打开)
 //		sendStr = "[]";
 		long timeEnd = System.currentTimeMillis();
-	    logger.info("执行完成:"+recStr+",耗时："+(timeEnd-timeBegin)/1000);
+	    logger.info("报文处理完成:"+recStr);
+	    logger.info("报文处理总耗时："+(timeEnd-timeBegin)+"毫秒");
 		ISynShortSender sender = new SynShortSenderImpl();
 		sender.doSend(sendStr, ctx);
 	}

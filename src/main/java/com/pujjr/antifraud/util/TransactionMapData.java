@@ -76,9 +76,8 @@ public class TransactionMapData implements Cloneable{
 				if(osName.equals("windows")){
 					conf.set("spark.sql.warehouse.dir", Utils.getProperty("warehouseDir").toString());//window打开
 				}
-//				conf.set("spark.executor.memory", "512m");//参数在start-pjsp.sh中配置
-//				conf.set("spark.storage.memoryFraction", "0.8");
-				
+				/*conf.set("spark.executor.memory", "512m");//参数在start-pjsp.sh中配置
+				conf.set("spark.storage.memoryFraction", "0.8");*/
 				//设置序列化
 				conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 				/*
@@ -112,9 +111,8 @@ public class TransactionMapData implements Cloneable{
 			if(osName.equals("windows")){
 				conf.set("spark.sql.warehouse.dir", Utils.getProperty("warehouseDir").toString());//window打开
 			}
-//			conf.set("spark.executor.memory", "512m");//参数在start-pjsp.sh中配置
-//			conf.set("spark.storage.memoryFraction", "0.8");
-			
+			/*conf.set("spark.executor.memory", "512m");//参数在start-pjsp.sh中配置
+			conf.set("spark.storage.memoryFraction", "0.8");*/
 			//设置序列化
 			conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
 			/*
@@ -130,6 +128,5 @@ public class TransactionMapData implements Cloneable{
 		}else{
 			return TransactionMapData.tmd;
 		}	
-	}
-	
+	}	
 }

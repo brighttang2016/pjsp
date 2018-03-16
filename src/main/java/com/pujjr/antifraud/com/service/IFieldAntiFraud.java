@@ -2,6 +2,7 @@ package com.pujjr.antifraud.com.service;
 
 import java.util.List;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
@@ -110,5 +111,25 @@ public interface IFieldAntiFraud {
 	 * @return
 	 */
 	public List<HisAntiFraudResult> invoiceAreaIdAntifraud(Row row,String appId,String tenantName);
+	
+	/**
+	 * 属性反欺诈
+	 * @author tom
+	 * @time 2018年3月16日 下午2:01:25
+	 * @param serviceName 服务名称。示例：【预筛查反欺诈】
+	 * @param resultList 反欺诈结果
+	 * @param tableRdd 待遍历表格数据集
+	 * @param appId 当前申请单号
+	 * @param name 承租人姓名
+	 * @param newFieldCName 新字段中文名
+	 * @param newFieldValue 新字段值
+	 * @param oldFieldCName 原始字段中文名。示例：身份证号
+	 * @param oldFieldKey 原始字段属性标识。示例：id_no
+	 * @return 反欺诈结果
+	 */
+	public List<HisAntiFraudResult> fieldAntifraud(String serviceName,List<HisAntiFraudResult> resultList,JavaRDD<Row> tableRdd,
+			String appId,String tenantName,
+			String newFieldCName,String newFieldValue,
+			String oldFieldCName,String oldFieldKey);
 	
 }
