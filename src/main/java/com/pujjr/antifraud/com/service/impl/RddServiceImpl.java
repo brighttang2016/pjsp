@@ -655,7 +655,7 @@ public class RddServiceImpl implements IRddService,Serializable {
 	}
 	
 	@Override
-	public void initRDD() {
+	public void initRdd() {
 		long jobStart  = System.currentTimeMillis();
 		RddFilterImpl rddFilterImpl = new RddFilterImpl();
 		DataFrameReader reader = rddFilterImpl.getReader();
@@ -688,41 +688,83 @@ public class RddServiceImpl implements IRddService,Serializable {
 	}
 	
 	@Override
+	public JavaRDD<Row> initCurrApplyInfo(String appId) {
+		long jobStart  = System.currentTimeMillis();
+		
+		JavaRDD<Row> applyTenantRdd = (JavaRDD<Row>) tmd.get("applyTenantRdd");
+		JavaRDD<Row> applySpouseRdd = (JavaRDD<Row>) tmd.get("applySpouseRdd");
+		JavaRDD<Row> applyColesseeRdd = (JavaRDD<Row>) tmd.get("applyColesseeRdd");
+		JavaRDD<Row> applyLinkmanRdd = (JavaRDD<Row>) tmd.get("applyLinkmanRdd");
+		JavaRDD<Row> applyFinanceRdd = (JavaRDD<Row>) tmd.get("applyFinanceRdd");
+		JavaRDD<Row> signFinanceDetailRdd = (JavaRDD<Row>) tmd.get("signFinanceDetailRdd");
+		
+		Map<String,Object> paramMap = new HashMap<String,Object>();
+        paramMap.put("app_id", appId);
+        JavaRDD<Row> currApplyTenantRdd = applyTenantRdd.filter(new Contains(paramMap));
+        JavaRDD<Row> currApplySpouseRdd = applySpouseRdd.filter(new Contains(paramMap));
+        JavaRDD<Row> currApplyColesseeRdd = applyColesseeRdd.filter(new Contains(paramMap));
+        JavaRDD<Row> currApplyLinkmanRdd = applyLinkmanRdd.filter(new Contains(paramMap));
+        JavaRDD<Row> currApplyFinanceRdd = applyFinanceRdd.filter(new Contains(paramMap));
+        JavaRDD<Row> currSignFinanceDetailRdd = signFinanceDetailRdd.filter(new Contains(paramMap));
+        
+        tmd.put("currApplyTenantRdd", currApplyTenantRdd);
+        tmd.put("currApplySpouseRdd", currApplySpouseRdd);
+        tmd.put("currApplyColesseeRdd", currApplyColesseeRdd);
+        tmd.put("currApplyLinkmanRdd", currApplyLinkmanRdd);
+        tmd.put("currApplyFinanceRdd", currApplyFinanceRdd);
+        tmd.put("currSignFinanceDetailRdd", currSignFinanceDetailRdd);
+        
+       /* if(currApplyTenantRdd != null){
+        	Row currTenant = currApplyTenantRdd.first();
+        	tmd.put("currTenantName", currTenant.getAs("name"));
+        }*/
+        
+        long jobEnd = System.currentTimeMillis();
+        logger.info("当前申请单信息初始化,耗时："+(jobEnd - jobStart)+"毫秒");
+		return currApplyTenantRdd;
+	}
+	
+	@Override
 	public String doService(JSONObject recJson) {
-		long jobStart  = System.currentTimeMillis();;
+		long jobStart  = System.currentTimeMillis();
 		long jobEnd = 0;
 		String sendStr = "";
 		final String tranCode = recJson.getString("tranCode");;
 		final String appId = recJson.getString("appId");
-		this.initRDD();
+		this.initRdd();
+		this.initCurrApplyInfo(appId);
 		switch(tranCode){
 		case "00001"://海量数据表测试
 			sendStr = this.selectBigDataTest(appId);
 //			sendStr = this.selectBigDataTestByJdbc(appId);
 			break;
 		case "10001"://申请单提交后反欺诈查询关系（初审操作）
-			sendStr = this.firstTrial(appId);
+//			sendStr = this.firstTrial(appId);
+			sendStr = new TransApplyCommitImpl().applyCommitTrial(appId);
 			break;
 		case "10002"://征信接口返回数据后第3方数据反欺诈查询关系（审核操作）
-			sendStr = this.creditTrial(appId);
+//			sendStr = this.creditTrial(appId);
+			sendStr = new TransCreditImpl().creditTrial(appId);
 			break;
 		case "10003"://审核完成后反欺诈查询关系（审批操作）
-			sendStr = this.checkTrial(appId);
+//			sendStr = this.checkTrial(appId);
+			sendStr = new TransApplyCheckImpl().applyCheckTrial(appId);
 			break;
 		case "10004"://签约提交后反欺诈（放款复核操作）
-			sendStr = this.signTrial(appId);
+//			sendStr = this.signTrial(appId);
+			sendStr = new TransSignImpl().signTrial(appId);
 			break;
 		case "10005"://放款复核后反欺诈查询关系（放款复核初级审批）
-			sendStr = this.loanReviewTrial(appId);
+//			sendStr = this.loanReviewTrial(appId);
+			sendStr = new TransLoanReviewImpl().loanReviewTrial(appId);
 			break;
 		case "10006":
-			sendStr = new PreScreeningImpl().doPreScreening(appId,recJson.getString("name"), recJson.getString("idNo"), recJson.getString("mobile")); 
+			sendStr = new TransPreScreeningImpl().preScreeningTrial(appId,recJson.getString("name"), recJson.getString("idNo"), recJson.getString("mobile")); 
 		}
 		jobEnd = System.currentTimeMillis();
 		this.clearRdd();
-        logger.info("业务逻辑执行(doService方法),执行耗时："+(jobEnd - jobStart)+"毫秒");
+        logger.info("业务逻辑执行(doService方法),耗时："+(jobEnd - jobStart)+"毫秒");
 		return sendStr;
 	}
-	
-	
+
 }

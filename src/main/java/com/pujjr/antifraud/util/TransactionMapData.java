@@ -60,9 +60,9 @@ public class TransactionMapData implements Cloneable{
 		return executor;
 	}
 	
-	public static synchronized TransactionMapData getInstance(){
+	public static TransactionMapData getInstance(){
 		if(TransactionMapData.tmd == null){
-//			synchronized (TransactionMapData.class) {
+			synchronized (TransactionMapData.class) {
 				TransactionMapData.tmd = new TransactionMapData();
 				tmd.map = new HashMap<String,Object>();
 				SparkConf conf = new SparkConf();
@@ -89,7 +89,7 @@ public class TransactionMapData implements Cloneable{
 				conf.set("spark.default.parallelism", "10");
 		        JavaSparkContext sc = new JavaSparkContext(conf);
 		        TransactionMapData.tmd.put("sc", sc);
-//			}
+			}
 			return TransactionMapData.tmd;
 		}else{
 			return TransactionMapData.tmd;

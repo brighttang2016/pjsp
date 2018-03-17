@@ -4,7 +4,7 @@ package com.pujjr.antifraud.com.service;
  * @author tom
  * 2018-03-15
  */
-public interface IPreScreening {
+public interface ITransPreScreening {
 	/**
 	 * 预筛查反欺诈
 	 * @author tom
@@ -15,5 +15,5 @@ public interface IPreScreening {
 	 * @param mobile 电话号码
 	 * @return 反欺诈结果
 	 */
-	public String doPreScreening(String appId,String name,String idNo,String mobile);
+	public String preScreeningTrial(String appId,String name,String idNo,String mobile);
 }

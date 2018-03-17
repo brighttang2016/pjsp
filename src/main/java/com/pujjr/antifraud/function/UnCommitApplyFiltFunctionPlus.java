@@ -6,7 +6,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 
 /**
- * @author tom
+ * @author tom 2018-03-17
  * 未提交订单编号过滤
  */
 public class UnCommitApplyFiltFunctionPlus implements Function<Row, Boolean>{

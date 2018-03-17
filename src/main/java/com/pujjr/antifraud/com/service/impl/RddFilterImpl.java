@@ -472,6 +472,53 @@ public class RddFilterImpl implements IRddFilter {
 		}
 		return isValid;
 	}
+	
+	/**
+	 * 反欺诈结果中历史数据合法性校验
+	 * @author tom
+	 * @time 2018年3月17日 下午12:26:44
+	 * @param newFieldValue 新字段值
+	 * @param oldFieldKey 原始字段属性标识
+	 * @return true:合法，false:非法
+	 */
+	public boolean isValidData(String newFieldValue,String oldFieldKey) {
+		boolean isValid = true;
+		//无效数据规则库
+		/**
+		 * 有线gps和无线pgs号码存在不规则的情况。
+		 */
+		String[] ruleBaseDatas = new String[]{"","null","0","/",".","000","0000","00000","000000","0000000","00000000","000000000","0000000000","00000000000","000000000000","0000000000000","00000000000000","000000000000000"};
+		for (String ruleBaseData : ruleBaseDatas) {
+			if(ruleBaseData.equals(newFieldValue)){
+				isValid = false;
+			}
+		}
+		if(newFieldValue != null && !"".equals(newFieldValue)){
+			if(oldFieldKey.equals("unit_name")){
+				if(newFieldValue.length() <= 4){
+					//单位名称大于4个字，参与反欺诈
+					isValid = false;
+				}
+			}else if(oldFieldKey.equals("mobile") || oldFieldKey.equals("mobile2") || oldFieldKey.equals("unit_tel")){
+				/**
+				 * 过滤无效电话号码
+				 * 过滤原因：1.0承租人表中，单位电话："0"：10564条记录;     "/":436条记录;    "1":168条记录     "0997":78条记录。并且，还有很多其他相同无效号码，若待匹配字符串刚好为这些无效字符，将反出大量无效数据。
+				 */
+				/*
+				 * 执行反欺诈过滤查询条件：
+				 * 		待匹配值若为电话号码，必须为7-15位数字，若为其他值，则必须不为空
+				 */
+				String telValue = newFieldValue;//电话号码值
+				if(telValue.length() < 7 || telValue.length() > 12){
+					isValid = false;
+				}
+			}
+		}else{
+			//空数据不参与反欺诈
+			isValid = false;
+		}
+		return isValid;
+	}
 
 	@Override
 	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName, String cols) {
@@ -495,7 +542,7 @@ public class RddFilterImpl implements IRddFilter {
         }
         
 	    /**
-	     * 方式1:采用join过滤未提交记录
+	     * 法一:采用join过滤未提交记录
 	     */
 	    /*if(Utils.getColumnList(cols).contains("app_id")){
 	    	//已提交申请单
@@ -506,9 +553,8 @@ public class RddFilterImpl implements IRddFilter {
 	    }*/
 	    tableRdd = dataSet.javaRDD();
 	    /**
-	     * 方式2：采用function过滤未提交记录
+	     * 法二：采用function过滤未提交记录
 	     */
-	    
 	    if(Utils.getColumnList(cols).contains("app_id")){
 	    	List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
 		    tableRdd = tableRdd.filter(new UnCommitApplyFiltFunctionPlus(unCommitAppIdList));
@@ -528,22 +574,25 @@ public class RddFilterImpl implements IRddFilter {
 	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String tenantName,
 		String newFieldCName,String newFieldValue,
 		String oldFieldCName,String oldFieldKey){
-		//遍历历史行数据
-		for (Row row : rowList) {
-			String oldAppId = row.getAs("app_id").toString();
-			//当前申请单不与同appId记录匹配
-			if(appId.equals(oldAppId))
-				continue;
-			HisAntiFraudResult result = new HisAntiFraudResult();
-			result.setAppId(appId);
-			result.setName(tenantName);
-			result.setNewFieldName(newFieldCName);
-			result.setNewFieldValue(newFieldValue);
-			result.setOldAppId(oldAppId);
-			result.setOldFieldName(oldFieldCName);
-			result.setOldFieldValue(row.getAs(oldFieldKey).toString());
-			this.isBlack(oldFieldKey, row.getAs(oldFieldKey).toString(), result);
-			resultList.add(result);
+		
+		if(this.isValidData(newFieldValue,oldFieldKey)){
+			//遍历历史行数据
+			for (Row row : rowList) {
+				String oldAppId = row.getAs("app_id").toString();
+				//当前申请单不与同appId记录匹配
+				if(appId.equals(oldAppId))
+					continue;
+				HisAntiFraudResult result = new HisAntiFraudResult();
+				result.setAppId(appId);
+				result.setName(tenantName);
+				result.setNewFieldName(newFieldCName);
+				result.setNewFieldValue(newFieldValue);
+				result.setOldAppId(oldAppId);
+				result.setOldFieldName(oldFieldCName);
+				result.setOldFieldValue(row.getAs(oldFieldKey).toString());
+				this.isBlack(oldFieldKey, row.getAs(oldFieldKey).toString(), result);
+				resultList.add(result);
+			}
 		}
 	}
 
@@ -609,5 +658,6 @@ public class RddFilterImpl implements IRddFilter {
 	    tmd.put("unCommitApplyRdd", tableRdd);
 		return tableRdd;
 	}
+
 
 }

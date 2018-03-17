@@ -265,6 +265,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 			String newFieldCName,String newFieldValue,
 			String oldFieldCName,String oldFieldKey
 			) {
+		if(tableRdd == null)
+			return resultList;
 		long jobStart = 0;
 		long jobEnd = 0;
 		IRddFilter rddFilterImpl = new RddFilterImpl();
@@ -281,6 +283,6 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		rddFilterImpl.assembleResultList(resultList, rowList, appId, tenantName, newFieldCName, newFieldValue, oldFieldCName, oldFieldKey);
         jobEnd = System.currentTimeMillis();
         logger.info(serviceName+newFieldCName+"<--->"+oldFieldCName+"，耗时："+(jobEnd - jobStart)+"毫秒");
-		return null;
+		return resultList;
 	}
 } 

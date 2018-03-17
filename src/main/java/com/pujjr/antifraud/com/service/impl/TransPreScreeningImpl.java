@@ -11,18 +11,20 @@ import org.apache.spark.sql.Row;
 
 import com.alibaba.fastjson.JSONObject;
 import com.pujjr.antifraud.com.service.IFieldAntiFraud;
-import com.pujjr.antifraud.com.service.IPreScreening;
+import com.pujjr.antifraud.com.service.ITransPreScreening;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
-
-public class PreScreeningImpl implements IPreScreening {
-	private static final Logger logger = Logger.getLogger(PreScreeningImpl.class);
+/**
+ * 预筛查反欺诈
+ * @author tom
+ *
+ */
+public class TransPreScreeningImpl implements ITransPreScreening {
+	private static final Logger logger = Logger.getLogger(TransPreScreeningImpl.class);
 	private TransactionMapData tmd = TransactionMapData.getInstance();
 	
-	
-	
 	@Override
-	public String doPreScreening(String appId, String name, String idNo, String mobile) {
+	public String preScreeningTrial(String appId, String name, String idNo, String mobile) {
 		logger.info("【预筛查反欺诈】--->>>开始");
 		String serviceName = "【预筛查反欺诈】--->>>";
 		String sendStr = "";
@@ -53,7 +55,7 @@ public class PreScreeningImpl implements IPreScreening {
 	    /**
 	     * 反欺诈匹配结果记录
 	     */
-	    List<Row> rowList = new ArrayList<Row>();
+	   /* List<Row> rowList = new ArrayList<Row>();
 	    //新字段中文名称
 	    String newFieldCName = "";
 	    //新字段值
@@ -61,7 +63,7 @@ public class PreScreeningImpl implements IPreScreening {
 	    //新字段值
         String oldFieldCName = "";
         //原始字段键
-        String oldFieldKey = "";
+        String oldFieldKey = "";*/
 		/**
 		 * 身份证号反欺诈
 		 * 匹配表：承租人、配偶、共租人、黑名单

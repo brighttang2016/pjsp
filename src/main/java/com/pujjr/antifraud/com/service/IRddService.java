@@ -1,5 +1,8 @@
 package com.pujjr.antifraud.com.service;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Row;
+
 import com.alibaba.fastjson.JSONObject;
 
 /**
@@ -60,6 +63,31 @@ public interface IRddService{
 	
 	public String selectHis(String appId);
 	
+	
+	
+	/**
+	 * 初始化RDD
+	 * @author tom
+	 * @time 2018年3月15日 下午5:32:29
+	 */
+	public void initRdd();
+	
+	/**
+	 * 清空Rdd
+	 * @author tom
+	 * @time 2018年3月15日 下午6:30:48
+	 */
+	public void clearRdd();
+	
+	/**
+	 * 初始化申请单信息
+	 * @author tom
+	 * @time 2018年3月17日 上午10:36:16
+	 * @param appId
+	 * @return
+	 */
+	public JavaRDD<Row> initCurrApplyInfo(String appId);
+	
 	/**
 	 * 查询服务路由：接收报文后执行服务
 	 * @author tom
@@ -68,19 +96,5 @@ public interface IRddService{
 	 * @return
 	 */
 	public String doService(JSONObject recJson);
-	
-	/**
-	 * 初始化RDD
-	 * @author tom
-	 * @time 2018年3月15日 下午5:32:29
-	 */
-	public void initRDD();
-	
-	/**
-	 * 清空Rdd
-	 * @author tom
-	 * @time 2018年3月15日 下午6:30:48
-	 */
-	public void clearRdd();
 	
 }
