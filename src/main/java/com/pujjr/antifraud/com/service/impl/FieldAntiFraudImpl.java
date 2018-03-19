@@ -273,10 +273,18 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 		/**
 		 * 查询条件
 		 */
+		String[] newFieldValueArr = newFieldValue.split("\\|");
+		String[] oldFieldKeyArr = oldFieldKey.split("\\|");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.clear();
 		paramMap.put("app_id", appId);
-        paramMap.put(oldFieldKey, newFieldValue);
+		for (int i = 0; i < oldFieldKeyArr.length; i++) {
+			try {
+				paramMap.put(oldFieldKeyArr[i],newFieldValueArr[i]);
+			} catch (Exception e) {
+				paramMap.put(oldFieldKeyArr[i],"");
+			}
+		}
         jobStart  = System.currentTimeMillis();
         List<Row> rowList = tableRdd.filter(new HisAntiFraudFunction(paramMap)).collect();
         logger.info(serviceName+newFieldCName+"<--->"+oldFieldCName+"，查询结果："+rowList);

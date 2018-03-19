@@ -666,7 +666,7 @@ public class RddServiceImpl implements IRddService,Serializable {
         rddFilterImpl.getTableRdd(reader, "t_apply_colessee", "app_id|id_no|mobile|unit_name|unit_tel");
         rddFilterImpl.getTableRdd(reader, "t_apply_linkman", "app_id|mobile");
         rddFilterImpl.getTableRdd(reader, "t_apply_finance", "app_id|car_vin|car_engine_no");
-        rddFilterImpl.getTableRdd(reader, "t_sign_finance_detail", "app_id|plate_no");
+        rddFilterImpl.getTableRdd(reader, "t_sign_finance_detail", "app_id|plate_no|gps_wired_no|gps_wireless_no|invoice_code|invoice_no");
         rddFilterImpl.getTableRdd(reader, "t_blacklist_ref_contract", "mobile");
         rddFilterImpl.getTableRdd(reader, "t_blacklist", "id_no");
         long jobEnd = System.currentTimeMillis();

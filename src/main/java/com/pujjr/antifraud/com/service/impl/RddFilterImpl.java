@@ -575,7 +575,14 @@ public class RddFilterImpl implements IRddFilter {
 		String newFieldCName,String newFieldValue,
 		String oldFieldCName,String oldFieldKey){
 		
+		String[] newFieldValueArr = newFieldValue.split("\\|");
+		String[] oldFieldKeyArr = oldFieldKey.split("\\|");
+		String newFieldValueStr = "";
+		for (int i = 0; i < newFieldValueArr.length; i++) {
+			newFieldValueStr = newFieldValueStr + "|" + newFieldValueArr[i];
+		}
 		if(this.isValidData(newFieldValue,oldFieldKey)){
+			String oldFieldValue = "";
 			//遍历历史行数据
 			for (Row row : rowList) {
 				String oldAppId = row.getAs("app_id").toString();
@@ -589,8 +596,15 @@ public class RddFilterImpl implements IRddFilter {
 				result.setNewFieldValue(newFieldValue);
 				result.setOldAppId(oldAppId);
 				result.setOldFieldName(oldFieldCName);
-				result.setOldFieldValue(row.getAs(oldFieldKey).toString());
-				this.isBlack(oldFieldKey, row.getAs(oldFieldKey).toString(), result);
+				//原始字段值
+				for (int i = 0; i < oldFieldKeyArr.length; i++) {
+					if(i == 0)
+						oldFieldValue = row.getAs(oldFieldKeyArr[i]);
+					else if(i > 0 && i < oldFieldKeyArr.length)
+						oldFieldValue = oldFieldValue + "|" + row.getAs(oldFieldKeyArr[i]);
+				}
+				result.setOldFieldValue(oldFieldValue);
+				this.isBlack(oldFieldKey, oldFieldValue, result);
 				resultList.add(result);
 			}
 		}

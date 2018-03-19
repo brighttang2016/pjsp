@@ -12,8 +12,7 @@ public class TransApplyCheckImpl implements ITransApplyCheck {
 	private TransactionMapData tmd = TransactionMapData.getInstance();
 	@Override
 	public String applyCheckTrial(String appId) {
-		// TODO Auto-generated method stub
-		return null;
+		String sendStr = new TransApplyCommitImpl().applyCommitTrial(appId);
+		return sendStr;
 	}
-
 }

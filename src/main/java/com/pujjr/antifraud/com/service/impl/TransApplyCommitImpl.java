@@ -24,7 +24,7 @@ public class TransApplyCommitImpl implements ITransApplyCommit {
 	private static final Logger logger = Logger.getLogger(TransApplyCommitImpl.class);
 	@Override
 	public String applyCommitTrial(String appId) {
-		String serviceName = "【申请提交反欺诈】--->>>";
+		String serviceName = "【申请提交、审核后反欺诈】--->>>";
 		logger.info(serviceName+"开始");
 		String sendStr = "";
 		long jobStartService = System.currentTimeMillis();
@@ -306,6 +306,7 @@ public class TransApplyCommitImpl implements ITransApplyCommit {
         /**
          * 联系人电话反欺诈
          */
+        linkmanRowList = linkmanRowList == null ? new ArrayList() : linkmanRowList;
         for (int i = 0; i < linkmanRowList.size(); i++) {
         	Row linkmanRow = linkmanRowList.get(i);
         	String linkmanMobile = linkmanRow.getAs("mobile");
