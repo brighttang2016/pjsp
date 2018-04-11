@@ -730,7 +730,7 @@ public class RddServiceImpl implements IRddService,Serializable {
 		long jobEnd = 0;
 		String sendStr = "";
 		final String tranCode = recJson.getString("tranCode");;
-		final String appId = recJson.getString("appId");
+		final String appId = recJson.getString("appId") == null ? "" : recJson.getString("appId");
 		this.initRdd();
 		this.initCurrApplyInfo(appId);
 		switch(tranCode){
