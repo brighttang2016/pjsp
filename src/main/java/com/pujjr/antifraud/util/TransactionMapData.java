@@ -84,9 +84,10 @@ public class TransactionMapData implements Cloneable{
 				conf.set("spark.kryo.registrator", "mypackage.MyRegistrator");
 				conf.set("spark.kryoserializer.buffer", "64");
 				*/
-				conf.set("spark.storage.memoryFraction", "0.8");
+//				conf.set("spark.storage.memoryFraction", "0.2");
 				conf.set("spark.speculation", "true");
 				conf.set("spark.default.parallelism", "10");
+//				conf.set("spark.driver.memory", "2g");
 		        JavaSparkContext sc = new JavaSparkContext(conf);
 		        TransactionMapData.tmd.put("sc", sc);
 			}

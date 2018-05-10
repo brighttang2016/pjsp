@@ -27,7 +27,8 @@ public class SocketServer extends Thread{
 
 	public void run() {
 		EventLoopGroup bossGroup = new NioEventLoopGroup(); 
-		EventLoopGroup workerGroup = new NioEventLoopGroup(Integer.parseInt(Utils.getProperty("poolSize")+""));
+		EventLoopGroup workerGroup = new NioEventLoopGroup(1);
+//		EventLoopGroup workerGroup = new NioEventLoopGroup(Integer.parseInt(Utils.getProperty("poolSize")+""));
 		try {
 			ServerBootstrap b = new ServerBootstrap(); 
 			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class) 
