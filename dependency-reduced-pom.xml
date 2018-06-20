@@ -4,7 +4,7 @@
   <groupId>com.pujjr</groupId>
   <artifactId>pjsp</artifactId>
   <name>pjsp</name>
-  <version>1.0.3.20180205-RELEASE</version>
+  <version>1.0.6.20180620-RELEASE</version>
   <url>http://maven.apache.org</url>
   <build>
     <finalName>pjsp</finalName>

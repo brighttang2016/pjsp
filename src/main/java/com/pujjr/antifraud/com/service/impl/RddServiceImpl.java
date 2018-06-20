@@ -659,7 +659,7 @@ public class RddServiceImpl implements IRddService,Serializable {
 		long jobStart  = System.currentTimeMillis();
 		RddFilterImpl rddFilterImpl = new RddFilterImpl();
 		DataFrameReader reader = rddFilterImpl.getReader();
-		rddFilterImpl.getCommitApply(reader, "t_apply", "app_id");
+//		rddFilterImpl.getCommitApply(reader, "t_apply", "app_id");
 		rddFilterImpl.getUnCommitApply(reader, "t_apply", "app_id");
         rddFilterImpl.getTableRdd(reader, "t_apply_tenant", "app_id|name|id_no|mobile|mobile2|unit_name|unit_tel");
         rddFilterImpl.getTableRdd(reader, "t_apply_spouse", "app_id|id_no|mobile|unit_name|unit_addr_ext|unit_tel");

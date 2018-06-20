@@ -18,7 +18,6 @@ import com.pujjr.antifraud.com.service.IRddFilter;
 import com.pujjr.antifraud.function.Contains;
 import com.pujjr.antifraud.function.HisAntiFraudFunction;
 import com.pujjr.antifraud.function.UnCommitApplyFiltFunction;
-import com.pujjr.antifraud.function.UnCommitApplyFiltFunctionPlus;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
@@ -537,8 +536,25 @@ public class RddFilterImpl implements IRddFilter {
          * persist
          */
         jobStartTime  = System.currentTimeMillis();
+        boolean isExistAppId = false;
         if(!"".equals(cols) && cols != null){
-        	dataSet = dataSet.select(Utils.getColumnArray(cols));
+        	String[] colsArray = cols.split("\\|");
+        	for (String col : colsArray) {
+				if("app_id".equals(col)) {
+					isExistAppId = true;
+					break;
+				}
+			}
+        	if(isExistAppId) {
+        		List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
+        		String unCommitAppIdStr = Utils.listToStrForIn(unCommitAppIdList);
+        		/**
+        		 * 20180620新增对未提交申请单的过滤
+        		 */
+        		dataSet = dataSet.select(Utils.getColumnArray(cols)).where("app_id not in "+unCommitAppIdStr);
+        	}else {
+        		dataSet = dataSet.select(Utils.getColumnArray(cols));
+        	}
         }
         
 	    /**
@@ -551,18 +567,26 @@ public class RddFilterImpl implements IRddFilter {
 	 	    joinColumn.add("app_id");
 	 	    dataSet = dataSet.join(commitApplyDataset,JavaConversions.asScalaBuffer(joinColumn).toSeq(),"inner");
 	    }*/
+        
 	    tableRdd = dataSet.javaRDD();
 	    /**
 	     * 法二：采用function过滤未提交记录
 	     */
-	    if(Utils.getColumnList(cols).contains("app_id")){
+	   /* if(Utils.getColumnList(cols).contains("app_id")){
 	    	List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
 		    tableRdd = tableRdd.filter(new UnCommitApplyFiltFunctionPlus(unCommitAppIdList));
-	    }
+	    }*/
+	    /**
+	     * 说明：20180620 发现，方法二由于匹配数据量太大，每张基础表初始化，都会进行万次级别匹配，耗时较严重。
+	     * 故：将过滤未提交申请单迁移至上方sql查询阶段，而非在结果集中再做过滤。
+	     */
+	    
 	    /**
 	     * 备注：方式1耗时太长
 	     */
 	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    tableRdd.first();
+//	    logger.info("总条数："+tableRdd.count());
 	    jobEndTime = System.currentTimeMillis();
 
 	    tmd.put(Utils.tableNameToRddName(tableName), tableRdd);

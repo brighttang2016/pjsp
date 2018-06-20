@@ -47,14 +47,31 @@ public class TransApplyCommitImpl implements ITransApplyCommit {
 	
         jobStart = System.currentTimeMillis();
         Row tenantRow = currApplyTenantRdd.isEmpty() ? null : currApplyTenantRdd.first();
-        Row spouseRow = currApplySpouseRdd.isEmpty() ? null : currApplySpouseRdd.first();
-        Row colesseeRow = currApplyColesseeRdd.isEmpty() ? null : currApplyColesseeRdd.first();
-        List<Row> linkmanRowList = currApplyLinkmanRdd.isEmpty() ? null : currApplyLinkmanRdd.collect();
-        Row applyFinanceRow = currApplyFinanceRdd.isEmpty() ? null : currApplyFinanceRdd.first();
-        Row signFinanceDetailRow = currSignFinanceDetailRdd.isEmpty() ? null : currSignFinanceDetailRdd.first();
-  
         jobEnd = System.currentTimeMillis();
-        logger.info(serviceName+"获取当前申请单相关信息：承租人、配偶、共租人、联系人、申请融资信息、签约融资明细,耗时"+(jobEnd - jobStart) + "毫秒");
+        logger.info(serviceName+"截至-获取当前申请单相关信息：承租人,耗时"+(jobEnd - jobStart) + "毫秒");
+        
+        Row spouseRow = currApplySpouseRdd.isEmpty() ? null : currApplySpouseRdd.first();
+        jobEnd = System.currentTimeMillis();
+        logger.info(serviceName+"截至-获取当前申请单相关信息：配偶,耗时"+(jobEnd - jobStart) + "毫秒");
+        
+        Row colesseeRow = currApplyColesseeRdd.isEmpty() ? null : currApplyColesseeRdd.first();
+        jobEnd = System.currentTimeMillis();
+        logger.info(serviceName+"截至-获取当前申请单相关信息：共租人,耗时"+(jobEnd - jobStart) + "毫秒");
+        
+        List<Row> linkmanRowList = currApplyLinkmanRdd.isEmpty() ? null : currApplyLinkmanRdd.collect();
+        jobEnd = System.currentTimeMillis();
+        logger.info(serviceName+"截至-获取当前申请单相关信息：申请单相关所有联系人,耗时"+(jobEnd - jobStart) + "毫秒");
+        
+        Row applyFinanceRow = currApplyFinanceRdd.isEmpty() ? null : currApplyFinanceRdd.first();
+        jobEnd = System.currentTimeMillis();
+        logger.info(serviceName+"截至-获取当前申请单相关信息：申请融资信息,耗时"+(jobEnd - jobStart) + "毫秒");
+        
+        Row signFinanceDetailRow = currSignFinanceDetailRdd.isEmpty() ? null : currSignFinanceDetailRdd.first();
+        jobEnd = System.currentTimeMillis();
+        logger.info(serviceName+"截至-获取当前申请单相关信息：签约融资明细,耗时"+(jobEnd - jobStart) + "毫秒");
+        
+        jobEnd = System.currentTimeMillis();
+        logger.info(serviceName+"截至-获取当前申请单相关信息完成,耗时"+(jobEnd - jobStart) + "毫秒");
         
 		/**
 		 * 当前承租人姓名

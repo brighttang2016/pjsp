@@ -19,6 +19,38 @@ import scala.collection.Seq;
 public class Utils {
 	private static final Logger logger = Logger.getLogger(Utils.class);
 	
+	
+	/**
+	 * list转字符串
+	 * 160068
+	 * 2018年6月20日 下午4:40:54
+	 * @param list
+	 * @return sql语句中，in部分。示例数据：('111','222','333')
+	 */
+	public static String listToStrForIn(List<String> list) {
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < list.size(); i++) {
+			if(i == 0) {
+				sb.append("(");
+				sb.append("'"+list.get(i)+"'");
+			}
+			
+			if(i > 0 && i < list.size() -1){
+				sb.append(",");
+				sb.append("'"+list.get(i)+"'");
+			}
+			
+			if(list.size() -1 == 0)
+				sb.append(")");
+			else if(i == list.size() -1) {
+				sb.append(",");
+				sb.append("'"+list.get(i)+"'");
+				sb.append(")");
+			}
+		}
+		return sb.toString();
+	}
+	
 	/**
 	 * list转seq
 	 * @author tom
