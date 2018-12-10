@@ -31,6 +31,7 @@ import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
 import com.pujju.antifraud.enumeration.EPersonType;
+import com.pujju.antifraud.enumeration.EReaderType;
 
 import scala.Serializable;
 
@@ -43,6 +44,94 @@ public class RddServiceImpl implements IRddService,Serializable {
 	private static String name = null;
 	private static final Logger logger = Logger.getLogger(RddServiceImpl.class);
 	private TransactionMapData tmd = TransactionMapData.getInstance();
+	
+	@Override
+	public JavaRDD<Row> getTableRdd(String tableName) {
+		logger.info("tableName:"+tableName);
+		DataFrameReader reader = new DataSourceServiceImpl().getReader(EReaderType.PCMS_READER);
+        reader.option("dbtable", tableName);
+        Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
+        JavaRDD<Row> javaRdd = dataSet.javaRDD();
+//        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		return javaRdd;
+	}
+
+	@Override
+	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName, String cols) {
+		long jobStartTime = 0;
+		long jobEndTime = 0;
+		JavaRDD<Row> tableRdd = null;
+		/**
+		 * load
+		 */
+        jobStartTime  = System.currentTimeMillis();
+        reader.option("dbtable", tableName);
+        Dataset<Row> dataSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        jobEndTime  = System.currentTimeMillis();
+        logger.info("table【"+tableName+"】load,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+        /**
+         * persist
+         */
+        jobStartTime  = System.currentTimeMillis();
+        boolean isExistAppId = false;
+        if(!"".equals(cols) && cols != null){
+        	String[] colsArray = cols.split("\\|");
+        	for (String col : colsArray) {
+				if("app_id".equals(col)) {
+					isExistAppId = true;
+					break;
+				}
+			}
+        	if(isExistAppId) {
+        		List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
+        		String unCommitAppIdStr = Utils.listToStrForIn(unCommitAppIdList);
+        		/**
+        		 * 20180620新增对未提交申请单的过滤
+        		 */
+        		dataSet = dataSet.select(Utils.getColumnArray(cols)).where("app_id not in "+unCommitAppIdStr);
+        	}else {
+        		dataSet = dataSet.select(Utils.getColumnArray(cols));
+        	}
+        }
+        
+	    /**
+	     * 法一:采用join过滤未提交记录
+	     */
+	    /*if(Utils.getColumnList(cols).contains("app_id")){
+	    	//已提交申请单
+		    Dataset<Row> commitApplyDataset = (Dataset<Row>) tmd.get("commitApplyDataset");
+	    	List<String> joinColumn = new ArrayList<String>();
+	 	    joinColumn.add("app_id");
+	 	    dataSet = dataSet.join(commitApplyDataset,JavaConversions.asScalaBuffer(joinColumn).toSeq(),"inner");
+	    }*/
+        
+	    tableRdd = dataSet.javaRDD();
+	    /**
+	     * 法二：采用function过滤未提交记录
+	     */
+	   /* if(Utils.getColumnList(cols).contains("app_id")){
+	    	List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
+		    tableRdd = tableRdd.filter(new UnCommitApplyFiltFunctionPlus(unCommitAppIdList));
+	    }*/
+	    /**
+	     * 说明：20180620 发现，方法二由于匹配数据量太大，每张基础表初始化，都会进行万次级别匹配，耗时较严重。
+	     * 故：将过滤未提交申请单迁移至上方sql查询阶段，而非在结果集中再做过滤。
+	     */
+	    
+	    /**
+	     * 备注：方式1耗时太长
+	     */
+	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    tableRdd.repartition(500);
+	    tableRdd.first();
+//	    logger.info("总条数："+tableRdd.count());
+	    jobEndTime = System.currentTimeMillis();
+
+	    tmd.put(Utils.tableNameToRddName(tableName), tableRdd);
+	    logger.info("table【"+tableName+"】persist,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+		return tableRdd;
+	}
+	
 	@Override
 	public String selectHis(String appId) {
 		return null;
@@ -54,18 +143,18 @@ public class RddServiceImpl implements IRddService,Serializable {
 		
 		IRddFilter rddFilter = new RddFilterImpl();
 		
-		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
-		JavaRDD<Row> colesseeRdd = rddFilter.getTableRdd("t_apply_colessee");
-		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_apply_spouse");
-		JavaRDD<Row> linkmanRdd = rddFilter.getTableRdd("t_apply_linkman");
-		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
-		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> tenantRdd = this.getTableRdd("t_apply_tenant");
+		JavaRDD<Row> colesseeRdd = this.getTableRdd("t_apply_colessee");
+		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
+		JavaRDD<Row> linkmanRdd = this.getTableRdd("t_apply_linkman");
+		JavaRDD<Row> financeRdd = this.getTableRdd("t_apply_finance");
+		JavaRDD<Row> signFinanceDetailRdd = this.getTableRdd("t_sign_finance_detail");
 		
 		//黑名单
-		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
-		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
 		
-		JavaRDD<Row> applyRdd = rddFilter.getTableRdd("t_apply");
+		JavaRDD<Row> applyRdd = this.getTableRdd("t_apply");
 		//未提交订单查询
 		List<String> uncommitApplyIdList = rddFilter.getUncommitAppidList(applyRdd);
 		tmd.put("uncommitApplyIdList", uncommitApplyIdList);
@@ -193,13 +282,13 @@ public class RddServiceImpl implements IRddService,Serializable {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IFieldAntiFraud fieldAntiFraud = new FieldAntiFraudImpl();
 		IRddFilter rddFilter = new RddFilterImpl();
-		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
-		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
-		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> financeRdd = this.getTableRdd("t_apply_finance");
+		JavaRDD<Row> tenantRdd = this.getTableRdd("t_apply_tenant");
+		JavaRDD<Row> signFinanceDetailRdd = this.getTableRdd("t_sign_finance_detail");
 		
 		//黑名单
-		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
-		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
 		
 		financeRdd.persist(StorageLevel.MEMORY_AND_DISK());
 		tenantRdd.persist(StorageLevel.MEMORY_AND_DISK());
@@ -259,12 +348,12 @@ public class RddServiceImpl implements IRddService,Serializable {
 		IFieldAntiFraud fieldAntiFraud = new FieldAntiFraudImpl();
 		IRddFilter rddFilter = new RddFilterImpl();
 //		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
-		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
-		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> tenantRdd = this.getTableRdd("t_apply_tenant");
+		JavaRDD<Row> signFinanceDetailRdd = this.getTableRdd("t_sign_finance_detail");
 		
 		//黑名单
-		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
-		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
 		
 		tmd.put("tenantRdd", tenantRdd);
 		tmd.put("signFinanceDetailRdd", signFinanceDetailRdd);
@@ -658,17 +747,17 @@ public class RddServiceImpl implements IRddService,Serializable {
 	public void initRdd() {
 		long jobStart  = System.currentTimeMillis();
 		RddFilterImpl rddFilterImpl = new RddFilterImpl();
-		DataFrameReader reader = rddFilterImpl.getReader();
-//		rddFilterImpl.getCommitApply(reader, "t_apply", "app_id");
+		DataFrameReader reader = new DataSourceServiceImpl().getReader(EReaderType.PCMS_READER);
+//		rddFilterImpl.getCommitApply(reader, "t_apply", "app_id|create_branch_code");
 		rddFilterImpl.getUnCommitApply(reader, "t_apply", "app_id");
-        rddFilterImpl.getTableRdd(reader, "t_apply_tenant", "app_id|name|id_no|mobile|mobile2|unit_name|unit_tel");
-        rddFilterImpl.getTableRdd(reader, "t_apply_spouse", "app_id|id_no|mobile|unit_name|unit_addr_ext|unit_tel");
-        rddFilterImpl.getTableRdd(reader, "t_apply_colessee", "app_id|id_no|mobile|unit_name|unit_tel");
-        rddFilterImpl.getTableRdd(reader, "t_apply_linkman", "app_id|mobile");
-        rddFilterImpl.getTableRdd(reader, "t_apply_finance", "app_id|car_vin|car_engine_no");
-        rddFilterImpl.getTableRdd(reader, "t_sign_finance_detail", "app_id|plate_no|gps_wired_no|gps_wireless_no|invoice_code|invoice_no");
-        rddFilterImpl.getTableRdd(reader, "t_blacklist_ref_contract", "mobile");
-        rddFilterImpl.getTableRdd(reader, "t_blacklist", "id_no");
+        this.getTableRdd(reader, "t_apply_tenant", "app_id|name|id_no|mobile|mobile2|unit_name|unit_tel");
+        this.getTableRdd(reader, "t_apply_spouse", "app_id|id_no|mobile|unit_name|unit_addr_ext|unit_tel");
+        this.getTableRdd(reader, "t_apply_colessee", "app_id|id_no|mobile|unit_name|unit_tel");
+        this.getTableRdd(reader, "t_apply_linkman", "app_id|mobile");
+        this.getTableRdd(reader, "t_apply_finance", "app_id|car_vin|car_engine_no");
+        this.getTableRdd(reader, "t_sign_finance_detail", "app_id|plate_no|gps_wired_no|gps_wireless_no|invoice_code|invoice_no");
+        this.getTableRdd(reader, "t_blacklist_ref_contract", "mobile");
+        this.getTableRdd(reader, "t_blacklist", "id_no");
         long jobEnd = System.currentTimeMillis();
         logger.info("所有RDD初始化(initRDD方法),执行耗时："+(jobEnd - jobStart)+"毫秒");
 	}
@@ -713,11 +802,6 @@ public class RddServiceImpl implements IRddService,Serializable {
         tmd.put("currApplyLinkmanRdd", currApplyLinkmanRdd);
         tmd.put("currApplyFinanceRdd", currApplyFinanceRdd);
         tmd.put("currSignFinanceDetailRdd", currSignFinanceDetailRdd);
-        
-       /* if(currApplyTenantRdd != null){
-        	Row currTenant = currApplyTenantRdd.first();
-        	tmd.put("currTenantName", currTenant.getAs("name"));
-        }*/
         
         long jobEnd = System.currentTimeMillis();
         logger.info("当前申请单信息初始化,耗时："+(jobEnd - jobStart)+"毫秒");

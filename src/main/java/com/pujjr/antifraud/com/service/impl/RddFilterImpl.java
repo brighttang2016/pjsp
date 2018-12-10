@@ -129,16 +129,7 @@ public class RddFilterImpl implements IRddFilter {
         return reader;
 	}
 	
-	@Override
-	public JavaRDD<Row> getTableRdd(String tableName) {
-		logger.info("tableName:"+tableName);
-		DataFrameReader reader = this.getReader();
-        reader.option("dbtable", tableName);
-        Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
-        JavaRDD<Row> javaRdd = dataSet.javaRDD();
-//        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
-		return javaRdd;
-	}
+	
 	@Override
 	public JavaRDD<Row> filtUncommitRecord(List<String> uncommitAppidList,JavaRDD<Row> javaRdd){
 		Map<String,Object> paramMap = new HashMap<String,Object>();
@@ -396,7 +387,8 @@ public class RddFilterImpl implements IRddFilter {
 	public List<HisAntiFraudResult> filtInvoceCodeAndNo(Row row, String appId, String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
-		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+//		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> signFinanceDetailRdd =  (JavaRDD<Row>) tmd.get("signFinanceDetailRdd");
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		if(row.getAs("INVOICE_CODE") == null || row.getAs("INVOICE_NO") == null)
 			return resultList;
@@ -518,23 +510,34 @@ public class RddFilterImpl implements IRddFilter {
 		}
 		return isValid;
 	}
+	
+/*	@Override
+	public JavaRDD<Row> getTableRdd(String tableName) {
+		logger.info("tableName:"+tableName);
+		DataFrameReader reader = new DataSourceServiceImpl().getReader(EReaderType.PCMS_READER);
+        reader.option("dbtable", tableName);
+        Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
+        JavaRDD<Row> javaRdd = dataSet.javaRDD();
+//        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		return javaRdd;
+	}
 
 	@Override
 	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName, String cols) {
 		long jobStartTime = 0;
 		long jobEndTime = 0;
 		JavaRDD<Row> tableRdd = null;
-		/**
+		*//**
 		 * load
-		 */
+		 *//*
         jobStartTime  = System.currentTimeMillis();
         reader.option("dbtable", tableName);
         Dataset<Row> dataSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
         jobEndTime  = System.currentTimeMillis();
         logger.info("table【"+tableName+"】load,耗时："+(jobEndTime - jobStartTime)+"毫秒");
-        /**
+        *//**
          * persist
-         */
+         *//*
         jobStartTime  = System.currentTimeMillis();
         boolean isExistAppId = false;
         if(!"".equals(cols) && cols != null){
@@ -548,43 +551,44 @@ public class RddFilterImpl implements IRddFilter {
         	if(isExistAppId) {
         		List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
         		String unCommitAppIdStr = Utils.listToStrForIn(unCommitAppIdList);
-        		/**
+        		*//**
         		 * 20180620新增对未提交申请单的过滤
-        		 */
+        		 *//*
         		dataSet = dataSet.select(Utils.getColumnArray(cols)).where("app_id not in "+unCommitAppIdStr);
         	}else {
         		dataSet = dataSet.select(Utils.getColumnArray(cols));
         	}
         }
         
-	    /**
+	    *//**
 	     * 法一:采用join过滤未提交记录
-	     */
-	    /*if(Utils.getColumnList(cols).contains("app_id")){
+	     *//*
+	    if(Utils.getColumnList(cols).contains("app_id")){
 	    	//已提交申请单
 		    Dataset<Row> commitApplyDataset = (Dataset<Row>) tmd.get("commitApplyDataset");
 	    	List<String> joinColumn = new ArrayList<String>();
 	 	    joinColumn.add("app_id");
 	 	    dataSet = dataSet.join(commitApplyDataset,JavaConversions.asScalaBuffer(joinColumn).toSeq(),"inner");
-	    }*/
+	    }
         
 	    tableRdd = dataSet.javaRDD();
-	    /**
+	    *//**
 	     * 法二：采用function过滤未提交记录
-	     */
-	   /* if(Utils.getColumnList(cols).contains("app_id")){
+	     *//*
+	    if(Utils.getColumnList(cols).contains("app_id")){
 	    	List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
 		    tableRdd = tableRdd.filter(new UnCommitApplyFiltFunctionPlus(unCommitAppIdList));
-	    }*/
-	    /**
+	    }
+	    *//**
 	     * 说明：20180620 发现，方法二由于匹配数据量太大，每张基础表初始化，都会进行万次级别匹配，耗时较严重。
 	     * 故：将过滤未提交申请单迁移至上方sql查询阶段，而非在结果集中再做过滤。
-	     */
+	     *//*
 	    
-	    /**
+	    *//**
 	     * 备注：方式1耗时太长
-	     */
+	     *//*
 	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    tableRdd.repartition(500);
 	    tableRdd.first();
 //	    logger.info("总条数："+tableRdd.count());
 	    jobEndTime = System.currentTimeMillis();
@@ -592,7 +596,7 @@ public class RddFilterImpl implements IRddFilter {
 	    tmd.put(Utils.tableNameToRddName(tableName), tableRdd);
 	    logger.info("table【"+tableName+"】persist,耗时："+(jobEndTime - jobStartTime)+"毫秒");
 		return tableRdd;
-	}
+	}*/
 	
 	@Override
 	public void assembleResultList(List<HisAntiFraudResult> resultList,List<Row> rowList,String appId,String tenantName,

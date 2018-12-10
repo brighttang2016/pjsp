@@ -1,6 +1,6 @@
 package com.pujjr.antifraud.com.service;
 /**
- * 预筛查服务
+ * 预筛查服务查询申请历史反欺诈
  * @author tom
  * 2018-03-15
  */

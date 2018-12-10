@@ -23,12 +23,12 @@ import com.pujju.antifraud.enumeration.EPersonType;
  */
 public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	private static final Logger logger = Logger.getLogger(FieldAntiFraudImpl.class);
+	TransactionMapData tmd = TransactionMapData.getInstance();
 	@Override
 	public List<HisAntiFraudResult> idNoAntiFraud(Row row,String appId,String newFieldName,EPersonType personType,String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
 		//上述三变量改为从变量池取
-		TransactionMapData tmd = TransactionMapData.getInstance();
 		JavaRDD<Row> tenantRdd = (JavaRDD<Row>) tmd.get("tenantRdd");
 		JavaRDD<Row> colesseeRdd = (JavaRDD<Row>) tmd.get("colesseeRdd");
 		JavaRDD<Row> spouseRdd = (JavaRDD<Row>) tmd.get("spouseRdd");
@@ -213,7 +213,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	public List<HisAntiFraudResult> gpsWiredNoAntiFraud(Row row, String appId, String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
-		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+//		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> spouseRdd = (JavaRDD<Row>) tmd.get("signFinanceDetailRdd");
 		if(row.getAs("GPS_WIRED_NO") == null)
 			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRED_NO").toString();
@@ -229,7 +230,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	public List<HisAntiFraudResult> gpsWirelessNoAntiFraud(Row row, String appId, String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
-		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+//		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> spouseRdd = (JavaRDD<Row>) tmd.get("signFinanceDetailRdd");
 		if(row.getAs("GPS_WIRELESS_NO") == null)
 			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRELESS_NO").toString();
