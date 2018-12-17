@@ -5,6 +5,7 @@
 "10004"://签约提交后反欺诈（放款复核操作）
 "10005"://放款复核后反欺诈查询关系（放款复核初级审批）
 "10006"://预筛查插叙申请历史反欺诈
+"20001"://预筛查历史反欺诈（申请单提交时，去预筛查系统查询预筛查历史）
 
 B301161219133N1
 
@@ -13,7 +14,23 @@ B301161219133N1
 {"tranCode":"10002","appId":"B2101802120016N1"}
 {"tranCode":"10005","appId":"B2101802120016N1"}
 {"tranCode":"10006","appId":"B2101802120016N1"}
+{"tranCode":"20001","appId":"C3081808220049ICBC"}
 
 
+-- 预筛查数据库
+select * from t_precheck;
+tenant_id 承租人
+tenantSpouse_id
 
-
+-- 补充：承租人配偶、共申人、共申人配偶
+select * from t_precheck_supply;
+reserve5 补充承租人配偶
+colessee_id 补充共申人
+colesseeSpouse_id 补充共申人配偶
+-- 客户表
+select * from t_custom;
+select * from t_colessee;
+select * from t_colessee_spouse;
+select * from t_tenant;
+select * from t_tenant_spouse;
+select * from t_fraud_his_result;

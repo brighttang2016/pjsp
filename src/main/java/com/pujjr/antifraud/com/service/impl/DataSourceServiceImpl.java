@@ -6,7 +6,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 
-import com.pujjr.antifraud.com.service.IDataSource;
+import com.pujjr.antifraud.com.service.IDataSourceService;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 import com.pujju.antifraud.enumeration.EReaderType;
@@ -16,7 +16,7 @@ import com.pujju.antifraud.enumeration.EReaderType;
  * @author 160068
  * 2018年12月10日 下午2:54:46
  */
-public class DataSourceServiceImpl implements IDataSource {
+public class DataSourceServiceImpl implements IDataSourceService {
 
 	@Override
 	public DataFrameReader getReader(EReaderType readerType) {

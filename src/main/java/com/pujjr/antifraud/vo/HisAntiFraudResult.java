@@ -1,6 +1,7 @@
 package com.pujjr.antifraud.vo;
 
 /**
+ * 申请单历史反欺诈
  * @author tom
  *
  */

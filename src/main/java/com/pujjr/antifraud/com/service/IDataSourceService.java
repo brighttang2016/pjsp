@@ -10,7 +10,7 @@ import com.pujju.antifraud.enumeration.EReaderType;
  * @author 160068
  * 2018年12月10日 下午2:54:57
  */
-public interface IDataSource {
+public interface IDataSourceService {
 	/**
 	 * 获取数据阅读器
 	 * 160068
