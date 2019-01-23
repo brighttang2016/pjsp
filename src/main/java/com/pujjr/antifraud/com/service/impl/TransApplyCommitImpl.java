@@ -122,74 +122,82 @@ public class TransApplyCommitImpl implements ITransApplyCommit {
          * 匹配表：承租人、配偶、共租人、联系人、黑名单
          */
         String mobile = (String) (tenantRow == null ? "" : tenantRow.getAs("mobile"));
-        //承租人电话号码1-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码1", mobile, "承租人电话号码1", "mobile");
-        //承租人电话号码1-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码1", mobile, "承租人电话号码2", "mobile2");
-        //承租人电话号码1-承租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码1", mobile, "承租人单位电话", "unit_tel");
-        //承租人电话号码1-配偶电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码1", mobile, "配偶电话号码", "mobile");
-        //承租人电话号码1-配偶单位电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码1", mobile, "配偶单位电话号码", "unit_tel");
-        //承租人电话号码1-共租人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码1", mobile, "共租人电话号码", "mobile");
-        //承租人电话号码1-共租人单位电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码1", mobile, "共租人单位电话号码", "unit_tel");
-        //承租人电话号码1-联系人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "承租人电话号码1", mobile, "联系人电话号码", "mobile");
+        if(mobile != null && mobile.length() >= 7 && mobile.length() <= 12) {
+        	//承租人电话号码1-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码1", mobile, "承租人电话号码1", "mobile");
+            //承租人电话号码1-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码1", mobile, "承租人电话号码2", "mobile2");
+            //承租人电话号码1-承租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码1", mobile, "承租人单位电话", "unit_tel");
+            //承租人电话号码1-配偶电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码1", mobile, "配偶电话号码", "mobile");
+            //承租人电话号码1-配偶单位电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码1", mobile, "配偶单位电话号码", "unit_tel");
+            //承租人电话号码1-共租人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码1", mobile, "共租人电话号码", "mobile");
+            //承租人电话号码1-共租人单位电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码1", mobile, "共租人单位电话号码", "unit_tel");
+            //承租人电话号码1-联系人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "承租人电话号码1", mobile, "联系人电话号码", "mobile"); 
+        }
         
         mobile = (String) (tenantRow == null ? "" : tenantRow.getAs("mobile2"));
-        //承租人电话号码2-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码2", mobile, "承租人电话号码1", "mobile");
-        //承租人电话号码2-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码2", mobile, "承租人电话号码2", "mobile2");
-        //承租人电话号码2-承租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码2", mobile, "承租人单位电话", "unit_tel");
-        //承租人电话号码2-配偶电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码2", mobile, "配偶电话号码", "mobile");
-        //承租人电话号码2-配偶单位电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码2", mobile, "配偶单位电话号码", "unit_tel");
-        //承租人电话号码2-共租人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码2", mobile, "共租人电话号码", "mobile");
-        //承租人电话号码2-共租人单位电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码2", mobile, "共租人单位电话号码", "unit_tel");
-        //承租人电话号码2-联系人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "承租人电话号码2", mobile, "联系人电话号码", "mobile");
-       
+        if(mobile != null && mobile.length() >= 7 && mobile.length() <= 12) {
+        	//承租人电话号码2-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码2", mobile, "承租人电话号码1", "mobile");
+            //承租人电话号码2-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码2", mobile, "承租人电话号码2", "mobile2");
+            //承租人电话号码2-承租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人电话号码2", mobile, "承租人单位电话", "unit_tel");
+            //承租人电话号码2-配偶电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码2", mobile, "配偶电话号码", "mobile");
+            //承租人电话号码2-配偶单位电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人电话号码2", mobile, "配偶单位电话号码", "unit_tel");
+            //承租人电话号码2-共租人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码2", mobile, "共租人电话号码", "mobile");
+            //承租人电话号码2-共租人单位电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人电话号码2", mobile, "共租人单位电话号码", "unit_tel");
+            //承租人电话号码2-联系人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "承租人电话号码2", mobile, "联系人电话号码", "mobile");
+        }
+        
         /**
          * 承租人单位名称反欺诈
          * 匹配表：承租人、配偶、共租人、黑名单
          */
-        String tenantUnitName = tenantRow.getAs("unit_name"); 
-        //承租人单位名称-承租人单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位名称", tenantUnitName, "承租人单位名称", "unit_name");
-        //承租人单位名称-配偶单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人单位名称", tenantUnitName, "配偶单位名称", "unit_name");
-        //承租人单位名称-共租人单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人单位名称", tenantUnitName, "共租人单位名称", "unit_name");
+        String tenantUnitName = (String)(tenantRow == null ? "" : tenantRow.getAs("unit_name")); 
+        if(tenantUnitName != null && tenantUnitName.length() > 5) {
+        	 //承租人单位名称-承租人单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位名称", tenantUnitName, "承租人单位名称", "unit_name");
+            //承租人单位名称-配偶单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人单位名称", tenantUnitName, "配偶单位名称", "unit_name");
+            //承租人单位名称-共租人单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人单位名称", tenantUnitName, "共租人单位名称", "unit_name");
+        }
         
         /**
          * 承租人单位电话反欺诈
          * 匹配表：承租人、配偶、共租人、联系人、黑名单
          */
-        String tenantUnitTel = tenantRow.getAs("unit_tel");
-        //承租人单位电话-承租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位电话", tenantUnitTel, "承租人单位电话", "unit_tel");
-        //承租人单位电话-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位电话", tenantUnitTel, "承租人电话号码1", "mobile");
-        //承租人单位电话-承租人电话号码2
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位电话", tenantUnitTel, "承租人单位电话2", "mobile2");
-        //承租人单位电话-配偶单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人单位电话", tenantUnitTel, "配偶单位电话", "unit_tel");
-        //承租人单位电话-配偶电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人单位电话", tenantUnitTel, "配偶电话", "mobile");
-        //承租人单位电话-共租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人单位电话", tenantUnitTel, "共租人单位电话", "unit_tel");
-        //承租人单位电话-共租人电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人单位电话", tenantUnitTel, "共租人电话", "mobile");
-        //承租人单位电话-联系人电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "承租人单位电话", tenantUnitTel, "联系人电话", "mobile");
+        String tenantUnitTel = (String)(tenantRow == null ? "" : tenantRow.getAs("unit_tel"));
+        if(tenantUnitTel != null && tenantUnitTel.length() >= 7 && tenantUnitTel.length() <= 12) {
+        	//承租人单位电话-承租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位电话", tenantUnitTel, "承租人单位电话", "unit_tel");
+            //承租人单位电话-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位电话", tenantUnitTel, "承租人电话号码1", "mobile");
+            //承租人单位电话-承租人电话号码2
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "承租人单位电话", tenantUnitTel, "承租人单位电话2", "mobile2");
+            //承租人单位电话-配偶单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人单位电话", tenantUnitTel, "配偶单位电话", "unit_tel");
+            //承租人单位电话-配偶电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "承租人单位电话", tenantUnitTel, "配偶电话", "mobile");
+            //承租人单位电话-共租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人单位电话", tenantUnitTel, "共租人单位电话", "unit_tel");
+            //承租人单位电话-共租人电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "承租人单位电话", tenantUnitTel, "共租人电话", "mobile");
+            //承租人单位电话-联系人电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "承租人单位电话", tenantUnitTel, "联系人电话", "mobile");
+        }
         
         /**
          * 配偶身份证号码反欺诈
@@ -206,55 +214,60 @@ public class TransApplyCommitImpl implements ITransApplyCommit {
         * 配偶电话号码反欺诈
         */
         String spouseMobile = (String) (spouseRow == null ? "" : spouseRow.getAs("mobile"));
-        //配偶电话号码-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶电话号码", spouseMobile, "承租人电话号码1", "mobile");
-        //配偶电话号码-承租人电话号码2
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶电话号码", spouseMobile, "承租人电话号码2", "mobile2");
-        //配偶电话号码-承租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶电话号码", spouseMobile, "承租人单位电话", "unit_tel");
-        //配偶电话号码-配偶电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶电话号码", spouseMobile, "配偶电话号码", "mobile");
-        //配偶电话号码-配偶单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶电话号码", spouseMobile, "配偶单位电话", "unit_tel");
-        //配偶电话号码-共租人电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶电话号码", spouseMobile, "共租人电话", "mobile");
-        //配偶电话号码-共租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶电话号码", spouseMobile, "共租人单位电话", "unit_tel");
-        //配偶电话号码-联系人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "配偶电话号码", spouseMobile, "联系人电话", "mobile");
+        if(spouseMobile != null && spouseMobile.length() >= 7 && spouseMobile.length() <= 12) {
+        	//配偶电话号码-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶电话号码", spouseMobile, "承租人电话号码1", "mobile");
+            //配偶电话号码-承租人电话号码2
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶电话号码", spouseMobile, "承租人电话号码2", "mobile2");
+            //配偶电话号码-承租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶电话号码", spouseMobile, "承租人单位电话", "unit_tel");
+            //配偶电话号码-配偶电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶电话号码", spouseMobile, "配偶电话号码", "mobile");
+            //配偶电话号码-配偶单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶电话号码", spouseMobile, "配偶单位电话", "unit_tel");
+            //配偶电话号码-共租人电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶电话号码", spouseMobile, "共租人电话", "mobile");
+            //配偶电话号码-共租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶电话号码", spouseMobile, "共租人单位电话", "unit_tel");
+            //配偶电话号码-联系人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "配偶电话号码", spouseMobile, "联系人电话", "mobile");
+        }
         
         /**
          * 配偶单位名称反欺诈
          */
         String spouseUnitName = (String) (spouseRow == null ? "" : spouseRow.getAs("unit_name"));
-        //配偶单位名称-承租人单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位名称", spouseUnitName, "承租人单位名称", "unit_name");
-        //配偶单位名称-配偶单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶单位名称", spouseUnitName, "配偶单位名称", "unit_name");
-        //配偶单位名称-共租人单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶单位名称", spouseUnitName, "共租人单位名称", "unit_name");
-        
+        if(spouseUnitName != null && spouseUnitName.length() > 5) {
+        	 //配偶单位名称-承租人单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位名称", spouseUnitName, "承租人单位名称", "unit_name");
+            //配偶单位名称-配偶单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶单位名称", spouseUnitName, "配偶单位名称", "unit_name");
+            //配偶单位名称-共租人单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶单位名称", spouseUnitName, "共租人单位名称", "unit_name");
+        }
+       
         /**
          * 配偶单位电话反欺诈
          */
         String spouseUnitTel = (String) (spouseRow == null ? "" : spouseRow.getAs("unit_tel"));
-        //配偶单位电话-承租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位电话", spouseUnitTel, "承租人单位电话", "unit_tel");
-        //配偶单位电话-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位电话", spouseUnitTel, "承租人电话号码1", "mobile");
-        //配偶单位电话-承租人电话号码2
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位电话", spouseUnitTel, "承租人电话号码2", "mobile2");
-        //配偶单位电话-配偶单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶单位电话", spouseUnitTel, "配偶单位电话", "unit_tel");
-        //配偶单位电话-配偶电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶单位电话", spouseUnitTel, "配偶电话号码", "mobile");
-        //配偶单位电话-共租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶单位电话", spouseUnitTel, "共租人单位电话", "unit_tel");
-        //配偶单位电话-共租人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶单位电话", spouseUnitTel, "共租人电话号码", "mobile");
-        //配偶单位电话-联系人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "配偶单位电话", spouseUnitTel, "联系人电话号码", "mobile");
-
+        if(spouseUnitTel != null && spouseUnitTel.length() >= 7 && spouseUnitTel.length() <= 12) {
+        	 //配偶单位电话-承租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位电话", spouseUnitTel, "承租人单位电话", "unit_tel");
+            //配偶单位电话-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位电话", spouseUnitTel, "承租人电话号码1", "mobile");
+            //配偶单位电话-承租人电话号码2
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "配偶单位电话", spouseUnitTel, "承租人电话号码2", "mobile2");
+            //配偶单位电话-配偶单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶单位电话", spouseUnitTel, "配偶单位电话", "unit_tel");
+            //配偶单位电话-配偶电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "配偶单位电话", spouseUnitTel, "配偶电话号码", "mobile");
+            //配偶单位电话-共租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶单位电话", spouseUnitTel, "共租人单位电话", "unit_tel");
+            //配偶单位电话-共租人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "配偶单位电话", spouseUnitTel, "共租人电话号码", "mobile");
+            //配偶单位电话-联系人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "配偶单位电话", spouseUnitTel, "联系人电话号码", "mobile");
+        }
         
         /**
          * 共租人身份证号码反欺诈
@@ -271,54 +284,59 @@ public class TransApplyCommitImpl implements ITransApplyCommit {
          * 共租人电话号码反欺诈
          */
         String colesseeMobile = (String) (colesseeRow == null ? "" : colesseeRow.getAs("mobile"));
-        //共租人电话号码-承租人电话号码1	
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人电话号码", colesseeMobile, "承租人电话号码1", "mobile");
-        //共租人电话号码-承租人电话号码2	
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人电话号码", colesseeMobile, "承租人电话号码2", "mobile2");
-        //共租人电话号码-承租人单位电话	
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人电话号码", colesseeMobile, "承租人单位电话", "unit_tel");
-        //共租人电话号码-共租人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人电话号码", colesseeMobile, "共租人电话号码", "mobile");
-        //共租人电话号码-共租人单位电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人电话号码", colesseeMobile, "共租人单位电话号码", "unit_tel");
-        //共租人电话号码-配偶电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人电话号码", colesseeMobile, "配偶电话号码", "mobile");
-        //共租人电话号码-配偶单位电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人电话号码", colesseeMobile, "配偶单位电话号码", "unit_tel");
-        //共租人电话号码-联系人电话号码	
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "共租人电话号码", colesseeMobile, "联系人电话号码", "mobile");
-
+        if(colesseeMobile != null && colesseeMobile.length() >= 7 && colesseeMobile.length() <= 12) {
+        	//共租人电话号码-承租人电话号码1	
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人电话号码", colesseeMobile, "承租人电话号码1", "mobile");
+            //共租人电话号码-承租人电话号码2	
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人电话号码", colesseeMobile, "承租人电话号码2", "mobile2");
+            //共租人电话号码-承租人单位电话	
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人电话号码", colesseeMobile, "承租人单位电话", "unit_tel");
+            //共租人电话号码-共租人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人电话号码", colesseeMobile, "共租人电话号码", "mobile");
+            //共租人电话号码-共租人单位电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人电话号码", colesseeMobile, "共租人单位电话号码", "unit_tel");
+            //共租人电话号码-配偶电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人电话号码", colesseeMobile, "配偶电话号码", "mobile");
+            //共租人电话号码-配偶单位电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人电话号码", colesseeMobile, "配偶单位电话号码", "unit_tel");
+            //共租人电话号码-联系人电话号码	
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyLinkmanRdd, appId, name, "共租人电话号码", colesseeMobile, "联系人电话号码", "mobile");
+        }
+        
         /**
          * 共租人单位名称反欺诈
          */
         String colesseeUnitName = (String) (colesseeRow == null ? "" : colesseeRow.getAs("unit_name"));
-        //共租人单位名称-承租人单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位名称", colesseeUnitName, "承租人单位名称", "unit_name");
-        //共租人单位名称-配偶单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人单位名称", colesseeUnitName, "配偶单位名称", "unit_name");
-        //共租人单位名称-共租人单位名称
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人单位名称", colesseeUnitName, "共租人单位名称", "unit_name");
-        
+        if(colesseeUnitName != null && colesseeUnitName.length() > 5) {
+        	//共租人单位名称-承租人单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位名称", colesseeUnitName, "承租人单位名称", "unit_name");
+            //共租人单位名称-配偶单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人单位名称", colesseeUnitName, "配偶单位名称", "unit_name");
+            //共租人单位名称-共租人单位名称
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人单位名称", colesseeUnitName, "共租人单位名称", "unit_name");
+        }
         /**
          * 共租人单位电话反欺诈
          */
-        String colesseeUnitTel = (String) (colesseeRow == null ? "" : colesseeRow.getAs("unit_tel"));;
-        //共租人单位电话-承租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "承租人单位电话", "unit_tel");
-        //共租人单位电话-承租人电话号码1
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "承租人电话号码1", "mobile");
-        //共租人单位电话-承租人电话号码2
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "承租人单位电话2", "mobile2");
-        //共租人单位电话-配偶单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人单位电话", colesseeUnitTel, "配偶单位电话", "unit_tel");
-        //共租人单位电话-配偶电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人单位电话", colesseeUnitTel, "配偶电话号码", "mobile");
-        //共租人单位电话-共租人单位电话
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人单位电话", colesseeUnitTel, "共租人单位电话", "unit_tel");
-        //共租人单位电话-共租人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人单位电话", colesseeUnitTel, "共租人电话号码", "mobile");
-        //共租人单位电话-联系人电话号码
-        fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "联系人电话号码", "mobile");
+        String colesseeUnitTel = (String) (colesseeRow == null ? "" : colesseeRow.getAs("unit_tel"));
+        if(colesseeUnitTel != null && colesseeUnitTel.length() >= 7 && colesseeUnitTel.length() <= 12) {
+        	//共租人单位电话-承租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "承租人单位电话", "unit_tel");
+            //共租人单位电话-承租人电话号码1
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "承租人电话号码1", "mobile");
+            //共租人单位电话-承租人电话号码2
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "承租人单位电话2", "mobile2");
+            //共租人单位电话-配偶单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人单位电话", colesseeUnitTel, "配偶单位电话", "unit_tel");
+            //共租人单位电话-配偶电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "共租人单位电话", colesseeUnitTel, "配偶电话号码", "mobile");
+            //共租人单位电话-共租人单位电话
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人单位电话", colesseeUnitTel, "共租人单位电话", "unit_tel");
+            //共租人单位电话-共租人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "共租人单位电话", colesseeUnitTel, "共租人电话号码", "mobile");
+            //共租人单位电话-联系人电话号码
+            fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "共租人单位电话", colesseeUnitTel, "联系人电话号码", "mobile");
+        }
         
         /**
          * 联系人电话反欺诈
@@ -326,23 +344,26 @@ public class TransApplyCommitImpl implements ITransApplyCommit {
         linkmanRowList = linkmanRowList == null ? new ArrayList() : linkmanRowList;
         for (int i = 0; i < linkmanRowList.size(); i++) {
         	Row linkmanRow = linkmanRowList.get(i);
-        	String linkmanMobile = linkmanRow.getAs("mobile");
-    		//联系人电话号码-承租人电话号码1
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人电话号码1", "mobile");
-            //联系人电话号码-承租人电话号码2
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人电话号码2", "mobile2");
-    		//联系人电话号码-承租人单位电话
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人单位电话", "unit_tel");
-            //联系人电话号码-配偶电话号码
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "配偶电话号码", "mobile");
-    		//联系人电话号码-配偶单位电话号码
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "配偶单位电话号码", "unit_tel");
-            //联系人电话号码-共租人电话号码
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "共租人电话号码", "mobile");
-    		//联系人电话号码-共租人单位电话
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人电话号码2", "unit_tel");
-            //联系人电话号码-联系人电话号码
-    		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "联系人电话号码", "mobile");
+        	System.out.println(linkmanRow.getAs("mobile"));
+        	String linkmanMobile = (String)(linkmanRow == null ? "":linkmanRow.getAs("mobile"));
+        	 if(linkmanMobile != null && linkmanMobile.length() >= 7 && linkmanMobile.length() <= 12) {
+        		//联系人电话号码-承租人电话号码1
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人电话号码1", "mobile");
+                 //联系人电话号码-承租人电话号码2
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人电话号码2", "mobile2");
+         		//联系人电话号码-承租人单位电话
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人单位电话", "unit_tel");
+                 //联系人电话号码-配偶电话号码
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "配偶电话号码", "mobile");
+         		//联系人电话号码-配偶单位电话号码
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applySpouseRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "配偶单位电话号码", "unit_tel");
+                 //联系人电话号码-共租人电话号码
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "共租人电话号码", "mobile");
+         		//联系人电话号码-共租人单位电话
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyColesseeRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "承租人电话号码2", "unit_tel");
+                 //联系人电话号码-联系人电话号码
+         		fieldAntiFraudImpl.fieldAntifraud(serviceName, resultList, applyTenantRdd, appId, name, "联系人"+(i+1)+"电话号码", linkmanMobile, "联系人电话号码", "mobile");
+        	}
 		}
         
         /**

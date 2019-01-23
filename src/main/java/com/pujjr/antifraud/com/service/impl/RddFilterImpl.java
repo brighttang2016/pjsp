@@ -177,7 +177,7 @@ public class RddFilterImpl implements IRddFilter {
 		javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
 		
 		if(newField.equals("UNIT_NAME")){
-			if(newFieldValue.length() > 4){//单位名称大于4个字，参与反欺诈
+			if(newFieldValue.length() > 5){//单位名称大于4个字，参与反欺诈
 				filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
 				rowCnt = (int) filtRdd.count();//存在数据库操作
@@ -320,7 +320,7 @@ public class RddFilterImpl implements IRddFilter {
 		Map<String,Object> paramMap = new HashMap<String,Object>();
 		paramMap.put(newField, newFieldValue);
 		if(newField.equals("UNIT_NAME")){
-			if(newFieldValue.length() > 4){//单位名称大于4个字，参与反欺诈
+			if(newFieldValue.length() > 5){//单位名称大于4个字，参与反欺诈
 				filtRdd = javaRdd.filter(new HisAntiFraudFunction(paramMap));
 				filtRdd.persist(StorageLevel.MEMORY_AND_DISK());
 				rowCnt = (int) filtRdd.count();//存在数据库操作
