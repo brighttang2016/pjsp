@@ -1,6 +1,8 @@
 package com.pujjr.antifraud.com.service;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.DataFrameReader;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import com.alibaba.fastjson.JSONObject;
@@ -10,6 +12,35 @@ import com.alibaba.fastjson.JSONObject;
  * 
  */
 public interface IRddService{
+	
+	/**
+	 * 获取数据集
+	 * 160068
+	 * 2018年12月11日 下午1:56:41
+	 * @param reader
+	 * @param tableName
+	 * @param cols
+	 * @return
+	 */
+	public Dataset<Row> getDataSet(DataFrameReader reader,String tableName,String cols);
+	
+	/**
+	 * 获取弹性分布式数据集
+	 * tom 2017年1月7日
+	 * @param tableName
+	 * @return
+	 */
+	public JavaRDD<Row> getTableRdd(String tableName);
+	/**
+	 * 
+	 * @author tom
+	 * @time 2018年3月16日 下午3:11:16
+	 * @param reader 
+	 * @param tableName 表名(示例：t_apply_tenant)
+	 * @param cols 列名(用法示例：app_id|id_no|mobile|unit_name|addr_ext|unit_tel)
+	 * @return
+	 */
+	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName,String cols);
 	/**
 	 * 查询服务路由
 	 * tom 2017年2月14日
@@ -86,7 +117,7 @@ public interface IRddService{
 	 * @param appId
 	 * @return
 	 */
-	public JavaRDD<Row> initCurrApplyInfo(String appId);
+	public void initCurrApplyInfo(String appId);
 	
 	/**
 	 * 查询服务路由：接收报文后执行服务

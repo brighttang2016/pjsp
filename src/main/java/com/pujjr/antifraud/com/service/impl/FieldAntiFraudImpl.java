@@ -1,6 +1,7 @@
 package com.pujjr.antifraud.com.service.impl;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,9 +12,12 @@ import org.apache.spark.sql.Row;
 
 import com.pujjr.antifraud.com.service.IFieldAntiFraud;
 import com.pujjr.antifraud.com.service.IRddFilter;
+import com.pujjr.antifraud.function.Contains;
 import com.pujjr.antifraud.function.HisAntiFraudFunction;
 import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
+import com.pujjr.antifraud.vo.HisPreScreenResult;
+import com.pujju.antifraud.enumeration.ECustomRef;
 import com.pujju.antifraud.enumeration.EPersonType;
 
 
@@ -23,12 +27,12 @@ import com.pujju.antifraud.enumeration.EPersonType;
  */
 public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	private static final Logger logger = Logger.getLogger(FieldAntiFraudImpl.class);
+	TransactionMapData tmd = TransactionMapData.getInstance();
 	@Override
 	public List<HisAntiFraudResult> idNoAntiFraud(Row row,String appId,String newFieldName,EPersonType personType,String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
 		//上述三变量改为从变量池取
-		TransactionMapData tmd = TransactionMapData.getInstance();
 		JavaRDD<Row> tenantRdd = (JavaRDD<Row>) tmd.get("tenantRdd");
 		JavaRDD<Row> colesseeRdd = (JavaRDD<Row>) tmd.get("colesseeRdd");
 		JavaRDD<Row> spouseRdd = (JavaRDD<Row>) tmd.get("spouseRdd");
@@ -213,7 +217,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	public List<HisAntiFraudResult> gpsWiredNoAntiFraud(Row row, String appId, String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
-		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+//		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> spouseRdd = (JavaRDD<Row>) tmd.get("signFinanceDetailRdd");
 		if(row.getAs("GPS_WIRED_NO") == null)
 			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRED_NO").toString();
@@ -229,7 +234,8 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
 	public List<HisAntiFraudResult> gpsWirelessNoAntiFraud(Row row, String appId, String tenantName) {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IRddFilter rddFilter = new RddFilterImpl();
-		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+//		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> spouseRdd = (JavaRDD<Row>) tmd.get("signFinanceDetailRdd");
 		if(row.getAs("GPS_WIRELESS_NO") == null)
 			return resultList;
 		String newFieldValue = row.getAs("GPS_WIRELESS_NO").toString();
@@ -292,5 +298,79 @@ public class FieldAntiFraudImpl implements IFieldAntiFraud {
         jobEnd = System.currentTimeMillis();
         logger.info(serviceName+newFieldCName+"<--->"+oldFieldCName+"，耗时："+(jobEnd - jobStart)+"毫秒");
 		return resultList;
+	}
+	
+	/**
+	 * 预筛查反欺诈逻辑
+	 * 160068
+	 * 2018年12月12日 下午3:26:23
+	 * @param model 模型定义，示例：承租人|承租人身份证号|承租人|承租人身份证号，承租人|承租人身份证号|承租人配偶|承租人配偶身份证号
+	 * @param icbcAppId 当前申请单对应工行预筛查编号
+	 * @param currUserName 当前申请单对应承租人姓名
+	 * @param targetKey 目标匹配字段名,示例：id_no
+	 * @param targetValue 目标匹配字段值,示例:362430198902280073
+	 * @param customRdd 当前所有客户RDD对象（已排除当前预筛查相关联客户，关联客户包含：承租人、承租人配偶、共申人、共申人配偶、补充承租人配偶、补充共申人、补充共申人配偶）
+	 * @param customRef 客户通过字段关联预筛查申请、补充预筛查资料表。
+	 * 			示例：预筛查表：tenant_id、tenantSpouse_id、colessee_id、colesseeSpouse_id；
+	 * 				补充预筛查资料表：reserver5、colessee_id、colesseeSpouse_id
+	 * @param precheckRdd 预筛查RDD对象：precheckRdd、补充预筛查表RDD对象：precheckSupplyRdd
+	 * @param hisPreScreenResultList 预筛查历史反欺诈结果
+	 */
+	public void fieldAntifraudPreScreen(String model,String icbcAppId,String currUserName,String targetKey,String targetValue
+			,JavaRDD<Row> customRdd,ECustomRef customRef,JavaRDD<Row> precheckRdd,List<HisPreScreenResult> hisPreScreenResultList) {
+		logger.info(model+"--->开始");
+		long startTime = System.currentTimeMillis();
+		String[] modelElement = model.split("\\|");
+		Map<String,Object> paramMap = new HashMap<String,Object>();
+		paramMap.put(targetKey, targetValue);
+		logger.info("111111111111111");
+		JavaRDD<Row> targetCustomRdd = customRdd.filter(new Contains(paramMap));
+		logger.info("222222222222222");
+		List<Row> targetCustomList = targetCustomRdd.collect();
+		logger.info("333333333333333");
+		
+		//目标客户对象
+		for (Row customRow : targetCustomList) {
+			String targetCustomId = customRow.getAs("id");
+			String name = customRow.getAs("name");
+			paramMap.clear();
+//			paramMap.put("tenant_id", targetCustomId);
+			paramMap.put(customRef.getTypeCode(), targetCustomId);
+			
+			//目标预筛查申请对象
+			JavaRDD<Row> targetPrecheckRdd = precheckRdd.filter(new Contains(paramMap));
+			for (Row targetPrecheckRow : targetPrecheckRdd.collect()) {
+				HisPreScreenResult hisPreScreenResult = new HisPreScreenResult();
+				
+				hisPreScreenResult.setIcbcAppId(icbcAppId);
+				hisPreScreenResult.setCurrentUserName(currUserName);
+//				hisPreScreenResult.setCurrentRoleName("承租人");
+				hisPreScreenResult.setCurrentRoleName(modelElement[0]);
+//				hisPreScreenResult.setNewFieldName("承租人身份证号");
+				hisPreScreenResult.setNewFieldName(modelElement[1]);
+				hisPreScreenResult.setNewFieldValue(targetValue);
+				
+//				hisPreScreenResult.setOldFieldName("承租人身份证号");
+				hisPreScreenResult.setOldFieldName(modelElement[3]);
+				hisPreScreenResult.setOldFieldValue(customRow.getAs(targetKey)+"");
+				hisPreScreenResult.setOldIcbcAppId(targetPrecheckRow.getAs(customRef.getIdRef())+"");
+				
+				hisPreScreenResult.setApplyDate((Date)(targetPrecheckRow.getAs("create_time")));
+				//原因备注
+				hisPreScreenResult.setAccden(targetPrecheckRow.getAs("remark")+"");
+//				hisPreScreenResult.setRoleName("承租人");
+				hisPreScreenResult.setRoleName(modelElement[2]);
+				//预筛查结果
+				hisPreScreenResult.setPreScreeningStatus(targetPrecheckRow.getAs("result_desc")+"");
+				
+				hisPreScreenResultList.add(hisPreScreenResult);
+			}
+		}
+		
+		
+		
+		long endTime = System.currentTimeMillis();
+		logger.info(model+"--->结束，耗时："+(endTime - startTime));
+		
 	}
 } 

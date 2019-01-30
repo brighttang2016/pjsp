@@ -23,6 +23,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.mysql.jdbc.Connection;
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.ResultSetMetaData;
+import com.pujjr.antifraud.com.service.IDataSourceService;
 import com.pujjr.antifraud.com.service.IFieldAntiFraud;
 import com.pujjr.antifraud.com.service.IRddFilter;
 import com.pujjr.antifraud.com.service.IRddService;
@@ -31,6 +32,7 @@ import com.pujjr.antifraud.util.TransactionMapData;
 import com.pujjr.antifraud.util.Utils;
 import com.pujjr.antifraud.vo.HisAntiFraudResult;
 import com.pujju.antifraud.enumeration.EPersonType;
+import com.pujju.antifraud.enumeration.EReaderType;
 
 import scala.Serializable;
 
@@ -43,6 +45,224 @@ public class RddServiceImpl implements IRddService,Serializable {
 	private static String name = null;
 	private static final Logger logger = Logger.getLogger(RddServiceImpl.class);
 	private TransactionMapData tmd = TransactionMapData.getInstance();
+	
+	public List<String> addCustomId(List<String> customIdList,Object id) {
+		if(id != null && !"".equals(id)) {
+			customIdList.add(id + "");
+    	}
+		return customIdList;
+	}
+	
+	public List<String> getCurrApplyCustom(String appId) {
+		logger.info("查询当前预筛查："+appId+",相关客户开始");
+		String idStr = "";
+		List<String> customIdList = new ArrayList<String>();
+		JavaRDD<Row> currApplyRdd = (JavaRDD<Row>) tmd.get("currApplyRdd");
+		JavaRDD<Row> precheckRdd = (JavaRDD<Row>) tmd.get("precheckRdd");
+//		JavaRDD<Row> customRdd = (JavaRDD<Row>) tmd.get("customRdd");
+		JavaRDD<Row> precheckSupplyRdd = (JavaRDD<Row>) tmd.get("precheckSupplyRdd");
+		
+		//当前申请单对应工行预筛查申请编号
+		String currIcbcAppId = "";
+		List<Row> rowList = currApplyRdd.collect();
+		 logger.info("currApplyRdd:"+currApplyRdd.collect());
+		for (Row row : rowList) {
+			currIcbcAppId = row.getAs("icbc_app_id");
+		}
+		
+		if(currIcbcAppId != null && !"".equals(currIcbcAppId)) {
+			Map<String,Object> paramMap = new HashMap<String,Object>();
+	        paramMap.put("id", currIcbcAppId);
+	        //当前预筛查申请对象
+	        JavaRDD<Row> currPrechekcRdd = precheckRdd.filter(new Contains(paramMap));
+	        logger.info("currPrechekcRdd:"+currPrechekcRdd.collect());
+	        for (Row row : currPrechekcRdd.collect()) {
+	        	this.addCustomId(customIdList, row.getAs("tenant_id"));
+	        	this.addCustomId(customIdList, row.getAs("tenantSpouse_id"));
+	        	this.addCustomId(customIdList, row.getAs("colessee_id"));
+	        	this.addCustomId(customIdList, row.getAs("colesseeSpouse_id"));
+			}
+	        
+	        //当前预筛查补充资料对象
+	        paramMap.clear();
+	        paramMap.put("precheck_id", currIcbcAppId);
+	        JavaRDD<Row> currPrecheckSupplyRdd = precheckSupplyRdd.filter(new Contains(paramMap));
+	        logger.info("currPrecheckSupplyRdd:"+currPrecheckSupplyRdd.collect());
+	        for (Row row : currPrecheckSupplyRdd.collect()) {
+	        	logger.info(row.toString());
+	        	//补充承租人配偶
+	        	this.addCustomId(customIdList, row.getAs("reserver5"));
+	        	//补充共申人
+	        	this.addCustomId(customIdList, row.getAs("colessee_id"));
+	        	//补充共申人配偶
+	        	this.addCustomId(customIdList, row.getAs("colesseeSpouse_id"));
+			}
+		}
+		logger.info("查询当前预筛查："+appId+",相关客户结束");
+		logger.info("查询当前预筛查："+appId+",相关客户如下："+JSONObject.toJSONString(customIdList));
+		return customIdList;
+	}
+	
+	/**
+	 * 获取客户关系表（排除appId预筛查申请相关客户）
+	 * 160068
+	 * 2018年12月14日 下午2:51:09
+	 * @param reader
+	 * @param tableName
+	 * @param cols
+	 * @param appId
+	 * @return
+	 */
+	public JavaRDD<Row> getCustomRdd(DataFrameReader reader,String tableName, String cols,String appId) {
+		logger.info("客户表查询开始");
+		JavaRDD<Row> tableRdd = null;
+		long startTime = System.currentTimeMillis();
+		long endTime = System.currentTimeMillis();
+		//获取当前预筛查申请相关客户
+		List<String> customIdList = this.getCurrApplyCustom(appId);
+		//查询预筛查客户表，排除当前申请单相关
+		IDataSourceService dataSource = new DataSourceServiceImpl();
+		DataFrameReader preScreenReader = dataSource.getReader(EReaderType.PRE_SCREEN_READER);
+		preScreenReader.option("dbtable", tableName);
+		Dataset<Row> customDataSet = preScreenReader.load();
+		customDataSet = customDataSet.select(Utils.getColumnArray(cols)).where("id not in " + Utils.listToStrForIn(customIdList));
+		JavaRDD<Row> customRdd = customDataSet.javaRDD();
+//		customRdd.first();
+		customRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		endTime = System.currentTimeMillis();
+		logger.info("客户表查询(排除当前预筛查申请相关客户)，耗时："+(endTime - startTime)+"毫秒");
+		tmd.put(Utils.tableNameToRddName(tableName),customRdd);
+		return tableRdd;
+	} 
+	
+	public JavaRDD<Row> getTableRddCurr(DataFrameReader reader,String tableName, String cols,String appId) {
+		
+		long jobStartTime = 0;
+		long jobEndTime = 0;
+		
+		JavaRDD<Row> tableRdd = null;
+        jobStartTime  = System.currentTimeMillis();
+        reader.option("dbtable", tableName);
+        Dataset<Row> dataSet = this.getDataSet(reader, tableName, cols);
+        dataSet = dataSet.where("app_id = '"+appId+"'");
+	    tableRdd = dataSet.javaRDD();
+	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    tableRdd.repartition(500);
+//	    tableRdd.first();
+	    logger.info("当前"+tableName+"-->RDD数据："+tableRdd.collect());
+	    jobEndTime = System.currentTimeMillis();
+
+	    logger.info("rdd名："+Utils.tableNameToRddCurrName(tableName));
+	    tmd.put(Utils.tableNameToRddCurrName(tableName), tableRdd);
+	    logger.info("table【"+tableName+"】persist,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+		return tableRdd;
+	}
+	
+	@Override
+	public Dataset<Row> getDataSet(DataFrameReader reader, String tableName, String cols) {
+		long jobStartTime = 0;
+		long jobEndTime = 0;
+		JavaRDD<Row> tableRdd = null;
+		/**
+		 * load
+		 */
+        jobStartTime  = System.currentTimeMillis();
+        reader.option("dbtable", tableName);
+        Dataset<Row> dataSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        jobEndTime  = System.currentTimeMillis();
+        logger.info("table【"+tableName+"】load,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+        
+        dataSet = dataSet.select(Utils.getColumnArray(cols));
+		return dataSet;
+	}
+	
+	@Override
+	public JavaRDD<Row> getTableRdd(String tableName) {
+		logger.info("tableName:"+tableName);
+		DataFrameReader reader = new DataSourceServiceImpl().getReader(EReaderType.PCMS_READER);
+        reader.option("dbtable", tableName);
+        Dataset<Row> dataSet = reader.load();//这个时候并不真正的执行，lazy级别的。基于dtspark表创建DataFrame
+        JavaRDD<Row> javaRdd = dataSet.javaRDD();
+//        javaRdd.persist(StorageLevel.MEMORY_AND_DISK());
+		return javaRdd;
+	}
+
+	@Override
+	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName, String cols) {
+		long jobStartTime = 0;
+		long jobEndTime = 0;
+		JavaRDD<Row> tableRdd = null;
+		/**
+		 * load
+		 */
+        jobStartTime  = System.currentTimeMillis();
+        reader.option("dbtable", tableName);
+        Dataset<Row> dataSet = reader.load();//第一次加载，涉及到数据库连接操作，秒级
+        jobEndTime  = System.currentTimeMillis();
+        logger.info("table【"+tableName+"】load,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+        /**
+         * persist
+         */
+        jobStartTime  = System.currentTimeMillis();
+        boolean isExistAppId = false;
+        if(!"".equals(cols) && cols != null){
+        	String[] colsArray = cols.split("\\|");
+        	for (String col : colsArray) {
+				if("app_id".equals(col)) {
+					isExistAppId = true;
+					break;
+				}
+			}
+        	if(isExistAppId) {
+        		List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
+        		String unCommitAppIdStr = Utils.listToStrForIn(unCommitAppIdList);
+        		/**
+        		 * 20180620新增对未提交申请单的过滤
+        		 */
+        		dataSet = dataSet.select(Utils.getColumnArray(cols)).where("app_id not in "+unCommitAppIdStr);
+        	}else {
+        		dataSet = dataSet.select(Utils.getColumnArray(cols));
+        	}
+        }
+        
+	    /**
+	     * 法一:采用join过滤未提交记录
+	     */
+	    /*if(Utils.getColumnList(cols).contains("app_id")){
+	    	//已提交申请单
+		    Dataset<Row> commitApplyDataset = (Dataset<Row>) tmd.get("commitApplyDataset");
+	    	List<String> joinColumn = new ArrayList<String>();
+	 	    joinColumn.add("app_id");
+	 	    dataSet = dataSet.join(commitApplyDataset,JavaConversions.asScalaBuffer(joinColumn).toSeq(),"inner");
+	    }*/
+        
+	    tableRdd = dataSet.javaRDD();
+	    /**
+	     * 法二：采用function过滤未提交记录
+	     */
+	   /* if(Utils.getColumnList(cols).contains("app_id")){
+	    	List<String> unCommitAppIdList = (List<String>) tmd.get("unCommitAppIdList");
+		    tableRdd = tableRdd.filter(new UnCommitApplyFiltFunctionPlus(unCommitAppIdList));
+	    }*/
+	    /**
+	     * 说明：20180620 发现，方法二由于匹配数据量太大，每张基础表初始化，都会进行万次级别匹配，耗时较严重。
+	     * 故：将过滤未提交申请单迁移至上方sql查询阶段，而非在结果集中再做过滤。
+	     */
+	    
+	    /**
+	     * 备注：方式1耗时太长
+	     */
+	    tableRdd.persist(StorageLevel.MEMORY_AND_DISK());
+	    tableRdd.repartition(500);
+	    tableRdd.first();
+//	    logger.info("总条数："+tableRdd.count());
+	    jobEndTime = System.currentTimeMillis();
+
+	    tmd.put(Utils.tableNameToRddName(tableName), tableRdd);
+	    logger.info("table【"+tableName+"】persist,耗时："+(jobEndTime - jobStartTime)+"毫秒");
+		return tableRdd;
+	}
+	
 	@Override
 	public String selectHis(String appId) {
 		return null;
@@ -54,18 +274,18 @@ public class RddServiceImpl implements IRddService,Serializable {
 		
 		IRddFilter rddFilter = new RddFilterImpl();
 		
-		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
-		JavaRDD<Row> colesseeRdd = rddFilter.getTableRdd("t_apply_colessee");
-		JavaRDD<Row> spouseRdd = rddFilter.getTableRdd("t_apply_spouse");
-		JavaRDD<Row> linkmanRdd = rddFilter.getTableRdd("t_apply_linkman");
-		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
-		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> tenantRdd = this.getTableRdd("t_apply_tenant");
+		JavaRDD<Row> colesseeRdd = this.getTableRdd("t_apply_colessee");
+		JavaRDD<Row> spouseRdd = this.getTableRdd("t_apply_spouse");
+		JavaRDD<Row> linkmanRdd = this.getTableRdd("t_apply_linkman");
+		JavaRDD<Row> financeRdd = this.getTableRdd("t_apply_finance");
+		JavaRDD<Row> signFinanceDetailRdd = this.getTableRdd("t_sign_finance_detail");
 		
 		//黑名单
-		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
-		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
 		
-		JavaRDD<Row> applyRdd = rddFilter.getTableRdd("t_apply");
+		JavaRDD<Row> applyRdd = this.getTableRdd("t_apply");
 		//未提交订单查询
 		List<String> uncommitApplyIdList = rddFilter.getUncommitAppidList(applyRdd);
 		tmd.put("uncommitApplyIdList", uncommitApplyIdList);
@@ -193,13 +413,13 @@ public class RddServiceImpl implements IRddService,Serializable {
 		List<HisAntiFraudResult> resultList = new ArrayList<HisAntiFraudResult>();
 		IFieldAntiFraud fieldAntiFraud = new FieldAntiFraudImpl();
 		IRddFilter rddFilter = new RddFilterImpl();
-		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
-		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
-		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> financeRdd = this.getTableRdd("t_apply_finance");
+		JavaRDD<Row> tenantRdd = this.getTableRdd("t_apply_tenant");
+		JavaRDD<Row> signFinanceDetailRdd = this.getTableRdd("t_sign_finance_detail");
 		
 		//黑名单
-		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
-		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
 		
 		financeRdd.persist(StorageLevel.MEMORY_AND_DISK());
 		tenantRdd.persist(StorageLevel.MEMORY_AND_DISK());
@@ -259,12 +479,12 @@ public class RddServiceImpl implements IRddService,Serializable {
 		IFieldAntiFraud fieldAntiFraud = new FieldAntiFraudImpl();
 		IRddFilter rddFilter = new RddFilterImpl();
 //		JavaRDD<Row> financeRdd = rddFilter.getTableRdd("t_apply_finance");
-		JavaRDD<Row> tenantRdd = rddFilter.getTableRdd("t_apply_tenant");
-		JavaRDD<Row> signFinanceDetailRdd = rddFilter.getTableRdd("t_sign_finance_detail");
+		JavaRDD<Row> tenantRdd = this.getTableRdd("t_apply_tenant");
+		JavaRDD<Row> signFinanceDetailRdd = this.getTableRdd("t_sign_finance_detail");
 		
 		//黑名单
-		JavaRDD<Row> blackListContractRdd = rddFilter.getTableRdd("t_blacklist_ref_contract");
-		JavaRDD<Row> blackListRdd = rddFilter.getTableRdd("t_blacklist");
+		JavaRDD<Row> blackListContractRdd = this.getTableRdd("t_blacklist_ref_contract");
+		JavaRDD<Row> blackListRdd = this.getTableRdd("t_blacklist");
 		
 		tmd.put("tenantRdd", tenantRdd);
 		tmd.put("signFinanceDetailRdd", signFinanceDetailRdd);
@@ -654,23 +874,58 @@ public class RddServiceImpl implements IRddService,Serializable {
 		return sendStr;
 	}
 	
+	public void initRddPreScreen(String appId,IDataSourceService dataSource) {
+		logger.info("初始化预筛查数据库开始");
+		long jobStart  = System.currentTimeMillis();
+		//初始化预筛查数据库
+        DataFrameReader preScreenReader = dataSource.getReader(EReaderType.PRE_SCREEN_READER);
+        this.getTableRdd(preScreenReader, "t_precheck", "id|create_time|account_id|branch_code|status|pj_result|gh_result|result_desc|remark|tenant_id|tenantSpouse_id|colessee_id|colesseeSpouse_id");
+        this.getTableRdd(preScreenReader, "t_precheck_supply", "id|create_time|precheck_id|account_id|branch_code|reserver5|gh_result|pj_result|result_desc|remark|colessee_id|colesseeSpouse_id");
+        this.getCustomRdd(preScreenReader, "t_custom", "id|id_no|name|mobile|other_credit_osskey|other_credit_result_desc", appId);
+        long jobEnd = System.currentTimeMillis();
+        logger.info("初始化预筛查数据库结束,执行耗时："+(jobEnd - jobStart)+"毫秒");
+	}
+	
 	@Override
 	public void initRdd() {
 		long jobStart  = System.currentTimeMillis();
 		RddFilterImpl rddFilterImpl = new RddFilterImpl();
-		DataFrameReader reader = rddFilterImpl.getReader();
-//		rddFilterImpl.getCommitApply(reader, "t_apply", "app_id");
-		rddFilterImpl.getUnCommitApply(reader, "t_apply", "app_id");
-        rddFilterImpl.getTableRdd(reader, "t_apply_tenant", "app_id|name|id_no|mobile|mobile2|unit_name|unit_tel");
-        rddFilterImpl.getTableRdd(reader, "t_apply_spouse", "app_id|id_no|mobile|unit_name|unit_addr_ext|unit_tel");
-        rddFilterImpl.getTableRdd(reader, "t_apply_colessee", "app_id|id_no|mobile|unit_name|unit_tel");
-        rddFilterImpl.getTableRdd(reader, "t_apply_linkman", "app_id|mobile");
-        rddFilterImpl.getTableRdd(reader, "t_apply_finance", "app_id|car_vin|car_engine_no");
-        rddFilterImpl.getTableRdd(reader, "t_sign_finance_detail", "app_id|plate_no|gps_wired_no|gps_wireless_no|invoice_code|invoice_no");
-        rddFilterImpl.getTableRdd(reader, "t_blacklist_ref_contract", "mobile");
-        rddFilterImpl.getTableRdd(reader, "t_blacklist", "id_no");
+		IDataSourceService dataSource = new DataSourceServiceImpl();
+		//初始化信贷系统数据库
+		DataFrameReader pcmsReader = dataSource.getReader(EReaderType.PCMS_READER);
+//		rddFilterImpl.getCommitApply(reader, "t_apply", "app_id|create_branch_code");
+		rddFilterImpl.getUnCommitApply(pcmsReader, "t_apply", "app_id");
+        this.getTableRdd(pcmsReader, "t_apply_tenant", "app_id|name|id_no|mobile|mobile2|unit_name|unit_tel");
+        this.getTableRdd(pcmsReader, "t_apply_spouse", "app_id|id_no|mobile|unit_name|unit_addr_ext|unit_tel");
+        this.getTableRdd(pcmsReader, "t_apply_colessee", "app_id|id_no|mobile|unit_name|unit_tel");
+        this.getTableRdd(pcmsReader, "t_apply_linkman", "app_id|mobile|seq");
+        this.getTableRdd(pcmsReader, "t_apply_finance", "app_id|car_vin|car_engine_no");
+        this.getTableRdd(pcmsReader, "t_sign_finance_detail", "app_id|plate_no|gps_wired_no|gps_wireless_no|invoice_code|invoice_no");
+        this.getTableRdd(pcmsReader, "t_blacklist_ref_contract", "mobile");
+        this.getTableRdd(pcmsReader, "t_blacklist", "id_no");
+      
         long jobEnd = System.currentTimeMillis();
         logger.info("所有RDD初始化(initRDD方法),执行耗时："+(jobEnd - jobStart)+"毫秒");
+	}
+	
+	@Override
+	public void initCurrApplyInfo(String appId) {
+		logger.info("初始化当前申请单承租人、共租人、配偶、联系人、融资信息、签约融资信息开始");
+		long jobStart  = System.currentTimeMillis();
+		IDataSourceService dataSource = new DataSourceServiceImpl();
+		//初始化信贷系统数据库
+		DataFrameReader pcmsReader = dataSource.getReader(EReaderType.PCMS_READER);
+		//获取当前申请单信息
+		this.getTableRddCurr(pcmsReader,"t_apply", "app_id|icbc_app_id",appId);
+		this.getTableRddCurr(pcmsReader,"t_apply_tenant", "app_id|name|id_no|mobile|mobile2|unit_name|unit_tel",appId);
+        this.getTableRddCurr(pcmsReader,"t_apply_spouse", "app_id|id_no|mobile|unit_name|unit_addr_ext|unit_tel",appId);
+        this.getTableRddCurr(pcmsReader,"t_apply_colessee", "app_id|id_no|mobile|unit_name|unit_tel",appId);
+        this.getTableRddCurr(pcmsReader,"t_apply_linkman", "app_id|mobile|seq",appId);
+        this.getTableRddCurr(pcmsReader,"t_apply_finance", "app_id|car_vin|car_engine_no",appId);
+        this.getTableRddCurr(pcmsReader,"t_sign_finance_detail", "app_id|plate_no|gps_wired_no|gps_wireless_no|invoice_code|invoice_no",appId);
+        
+        long jobEnd = System.currentTimeMillis();
+        logger.info("初始化当前申请单承租人、共租人、配偶、联系人、融资信息、签约融资信息结束,耗时："+(jobEnd - jobStart)+"毫秒");
 	}
 	
 	@Override
@@ -688,49 +943,13 @@ public class RddServiceImpl implements IRddService,Serializable {
 	}
 	
 	@Override
-	public JavaRDD<Row> initCurrApplyInfo(String appId) {
-		long jobStart  = System.currentTimeMillis();
-		
-		JavaRDD<Row> applyTenantRdd = (JavaRDD<Row>) tmd.get("applyTenantRdd");
-		JavaRDD<Row> applySpouseRdd = (JavaRDD<Row>) tmd.get("applySpouseRdd");
-		JavaRDD<Row> applyColesseeRdd = (JavaRDD<Row>) tmd.get("applyColesseeRdd");
-		JavaRDD<Row> applyLinkmanRdd = (JavaRDD<Row>) tmd.get("applyLinkmanRdd");
-		JavaRDD<Row> applyFinanceRdd = (JavaRDD<Row>) tmd.get("applyFinanceRdd");
-		JavaRDD<Row> signFinanceDetailRdd = (JavaRDD<Row>) tmd.get("signFinanceDetailRdd");
-		
-		Map<String,Object> paramMap = new HashMap<String,Object>();
-        paramMap.put("app_id", appId);
-        JavaRDD<Row> currApplyTenantRdd = applyTenantRdd.filter(new Contains(paramMap));
-        JavaRDD<Row> currApplySpouseRdd = applySpouseRdd.filter(new Contains(paramMap));
-        JavaRDD<Row> currApplyColesseeRdd = applyColesseeRdd.filter(new Contains(paramMap));
-        JavaRDD<Row> currApplyLinkmanRdd = applyLinkmanRdd.filter(new Contains(paramMap));
-        JavaRDD<Row> currApplyFinanceRdd = applyFinanceRdd.filter(new Contains(paramMap));
-        JavaRDD<Row> currSignFinanceDetailRdd = signFinanceDetailRdd.filter(new Contains(paramMap));
-        
-        tmd.put("currApplyTenantRdd", currApplyTenantRdd);
-        tmd.put("currApplySpouseRdd", currApplySpouseRdd);
-        tmd.put("currApplyColesseeRdd", currApplyColesseeRdd);
-        tmd.put("currApplyLinkmanRdd", currApplyLinkmanRdd);
-        tmd.put("currApplyFinanceRdd", currApplyFinanceRdd);
-        tmd.put("currSignFinanceDetailRdd", currSignFinanceDetailRdd);
-        
-       /* if(currApplyTenantRdd != null){
-        	Row currTenant = currApplyTenantRdd.first();
-        	tmd.put("currTenantName", currTenant.getAs("name"));
-        }*/
-        
-        long jobEnd = System.currentTimeMillis();
-        logger.info("当前申请单信息初始化,耗时："+(jobEnd - jobStart)+"毫秒");
-		return currApplyTenantRdd;
-	}
-	
-	@Override
 	public String doService(JSONObject recJson) {
 		long jobStart  = System.currentTimeMillis();
 		long jobEnd = 0;
 		String sendStr = "";
 		final String tranCode = recJson.getString("tranCode");;
 		final String appId = recJson.getString("appId") == null ? "" : recJson.getString("appId");
+		IDataSourceService dataSource = new DataSourceServiceImpl();
 		this.initRdd();
 		this.initCurrApplyInfo(appId);
 		switch(tranCode){
@@ -758,13 +977,17 @@ public class RddServiceImpl implements IRddService,Serializable {
 //			sendStr = this.loanReviewTrial(appId);
 			sendStr = new TransLoanReviewImpl().loanReviewTrial(appId);
 			break;
-		case "10006":
+		case "10006"://预筛查查询申请单历史反欺诈
 			sendStr = new TransPreScreeningImpl().preScreeningTrial(appId,recJson.getString("name"), recJson.getString("idNo"), recJson.getString("mobile")); 
+			break;
+		case "20001"://预筛查历史反欺诈
+			this.initRddPreScreen(appId, dataSource);
+			sendStr = new TransPreScreeningHisImpl().preScreenHisTrial(appId);
+			break;
 		}
 		jobEnd = System.currentTimeMillis();
 		this.clearRdd();
         logger.info("业务逻辑执行(doService方法),耗时："+(jobEnd - jobStart)+"毫秒");
 		return sendStr;
 	}
-
 }

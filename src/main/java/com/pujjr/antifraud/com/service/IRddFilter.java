@@ -28,13 +28,6 @@ public interface IRddFilter {
 	 * @return 未提交申请单appid列表
 	 */
 	public List<String> getUncommitAppidList(JavaRDD<Row> applyRdd);
-	/**
-	 * 获取弹性分布式数据集
-	 * tom 2017年1月7日
-	 * @param tableName
-	 * @return
-	 */
-	public JavaRDD<Row> getTableRdd(String tableName);
 	
 	/**
 	 * 不包含当前申请单号对应记录（过滤条件使用appId）
@@ -70,17 +63,6 @@ public interface IRddFilter {
 	 * @return
 	 */
 	public boolean isValidData(String fieldData);
-	
-	/**
-	 * 
-	 * @author tom
-	 * @time 2018年3月16日 下午3:11:16
-	 * @param reader 
-	 * @param tableName 表名(示例：t_apply_tenant)
-	 * @param cols 列名(用法示例：app_id|id_no|mobile|unit_name|addr_ext|unit_tel)
-	 * @return
-	 */
-	public JavaRDD<Row> getTableRdd(DataFrameReader reader,String tableName,String cols);
 	
 	/**
 	 * 装配反欺诈结果

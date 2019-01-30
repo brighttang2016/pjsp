@@ -63,6 +63,31 @@ public class Utils {
 	}
 	
 	/**
+	 * 表名转Rdd名(前缀Curr)
+	 * @author tom
+	 * @time 2018年3月15日 下午6:15:10
+	 * @param tableName 表名，必须是xxxx_yyyy_dddd结构
+	 * @return 转换后Rdd名称，如果输入表名为：xxxx_yyyy_dddd，则输出Rdd名称为：yyyyDdddRdd
+	 */
+	public static String tableNameToRddCurrName(String tableName){
+        String[] splitArray = tableName.split("_");
+        StringBuffer sb = new StringBuffer();
+//        sb.append("curr");
+        for (int i = 0; i < splitArray.length; i++) {
+        	String splitName = splitArray[i];
+        	if(i >= 1) {
+        		sb.append(splitName.substring(0, 1).toUpperCase());
+    			sb.append(splitName.substring(1, splitName.length()));
+        	}
+		}
+        sb.append("Rdd");
+        if("Rdd".equals(sb.toString()))
+        	throw new RuntimeException("异常：表名转Rdd名错误!");
+        
+        return "curr"+sb.toString();
+	}
+	
+	/**
 	 * 表名转Rdd名
 	 * @author tom
 	 * @time 2018年3月15日 下午6:15:10
